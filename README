@@ -17,6 +17,7 @@ As for important deliverables from this code (using dir_names defined in 'prepro
 	8. $genotype_dir"YRI_het_prob_genotype.vcf": heterozygous probabilities for our 10 cell lines (based on impute2)
 	9. $processed_allelic_counts_dir"allelic_counts_gene_mapped_het_prob_*.txt" where * is the heterozygous probability threshold used to call heterozygous sites. I computed this matrices for a bunch of different thresholds. This matrix contains refAlleleCounts_totalCounts in each cell. Currently no filtering on sites (this will be changed)
 	10. $visualize_allelic_counts_dir contains plots describing allelic count quantification
+	11. $fastq_input_dir"fastq_mapping.txt" contains list of mapping from sample_ids (cellLine_timeStep) to fastq files composing those samples
 
 The code is not perfect, but I think the commenting is pretty throurough. 
 
