@@ -2,7 +2,7 @@
 #SBATCH --time=06:00:00 --mem=12G
 
 
-##Origin branch v1
+##Origin branch 
 ################################################################################################################################################################
 ################################################################################################################################################################
 #INPUT FILES
@@ -106,8 +106,9 @@ sample_swap_check_dir="/project2/gilad/bstrober/ipsc_differentiation/preprocess/
 # Both merged fastq files and fastq_mapping.txt will be saved in output directory, $fastq_dir
 # Note: This code really isn't the best b/c it very manually parses the fastq files based on the lane_design files. So caution should be taken in applying merge_fastq_replicates to new situations.
 # Takes about 20 minutes to run
-sh merge_fastq_replicates.sh $fastq_round_1_input_dir $fastq_round_2_input_dir $lane_design_round_1_file $lane_design_round_2_file $fastq_input_dir"2"
-
+if false; then
+sbatch merge_fastq_replicates.sh $fastq_round_1_input_dir $fastq_round_2_input_dir $lane_design_round_1_file $lane_design_round_2_file $fastq_input_dir"2"
+fi
 
 ##Part 2
 # Run "sbatch fastqc_and_download_reference_genome.sh $fastq_input_dir $fastqc_dir $genome_dir" to completion.
@@ -129,13 +130,14 @@ fi
 # PART 4
 # Run sbatch preprocess_total_expression.sh $preprocess_total_expression_dir $lane_design_file $exon_file $bam_dir $visualize_total_expression_dir $fastqc_dir
 # This script:
-#    1. Processes the aligned read counts and creates quantile normalized expression data (preprocess_total_expression.R)
+#    1. Processes the aligned read counts and creates quantile normalized expression data (preprocess_total_expression.R). 
+#       # 1. also includes filters for genes. Genes need to have at least 10 samples such that RPKM >= .1 and raw counts >= 6
 #    2. Prepares covariate files (prepare_covariate_files.R)
 #    3. Also does some exploratory visualization analysis of the expression data  (visualize_processed_total_expression.R)
 #  Takes about 4 hours to run
 exon_file=$genome_dir"exons.saf"
 if false; then
-sh preprocess_total_expression.sh $preprocess_total_expression_dir $exon_file $bam_dir $visualize_total_expression_dir $metadata_input_file $covariate_dir $fastqc_dir
+sbatch preprocess_total_expression.sh $preprocess_total_expression_dir $exon_file $bam_dir $visualize_total_expression_dir $metadata_input_file $covariate_dir $fastqc_dir
 fi
 
 
@@ -144,6 +146,11 @@ fi
 # Preprocess allelic counts
 #############################################################################################################################
 
+
+# Run the following three parts in series:
+#########################################
+
+### Part 1
 #  wasp_maping_pipeline_part1.sh
 #  This includes:
 #       1. WASP Mapping Pipeline Step 1: Create text based SNP files. 
@@ -165,6 +172,9 @@ fi
 vcf_file=$genotype_dir"YRI_genotype.vcf.gz"
 
 
+
+### Part 2
+
 # wasp_mapping_pipeline_part2.sh (run in parallel for each sample)
 #       2. WASP Mapping Pipeline Step 2: Initial Mapping of fastq files
 #             WASP description: Map the fastq files using your favorite mapper/options and filter for
@@ -179,6 +189,8 @@ while read standard_id_fastq sequencer_id; do
 done<$sample_names
 fi
 
+
+### PART 3
 # Now that we have run the WASP mapping pipeline and GATK ASEReadCounter, we now have one allelic count file per sample
 # process_and_organize_allelic_counts.sh will:
 ######### 1. Merge all of the sample specific count files into one table
@@ -190,6 +202,11 @@ sh process_and_organize_allelic_counts.sh $raw_allelic_counts_dir $processed_all
 fi
 
 
+
+
+
+
+## USED TO DEBUG SAMPLE SWAPPING
 
 # debug_sample_swap_driver.sh checks to make sure that every RNA-seq sample (has the correct label) and is paired correctly with its corresponding genotype
 # We will test this by looping through each rna-seq sample, and for each sample:
