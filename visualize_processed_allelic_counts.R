@@ -243,36 +243,43 @@ number_of_heterozygous_sites_at_various_filters_lineplot <- function(ref_counts,
     number_of_sites <- c()
     number_of_heterozygous_lines <- c()
     fraction_of_biallelic_samples <- c()
+    min_num_reads <- c()
 
     #num_het_lines <- c(6,7,8,9,10)
     #fraction_of_samples <- c(.6,.7,.8,.9)
     num_het_lines <- c(4,5,6,7,8,9)
     fraction_of_samples <- c(.5,.6,.7,.8,.9)
+    min_reads <- c(2,3)
     for (i in 1:length(num_het_lines)) {
         for (j in 1:length(fraction_of_samples)) {
-            # Threshold for min number of heterozygous cell lines
-            number_of_heterozygous_lines_i <- num_het_lines[i]
-            # Threshold for min fraction of heterozygous samples that show biallelic expression
-            fraction_of_biallelic_samples_i <- fraction_of_samples[j]
+            for (k in 1:length(min_reads)) {
+                # Threshold for min number of heterozygous cell lines
+                number_of_heterozygous_lines_i <- num_het_lines[i]
+                # Threshold for min fraction of heterozygous samples that show biallelic expression
+                fraction_of_biallelic_samples_i <- fraction_of_samples[j]
+                # Threshold for min reads
+                min_reads_i <- min_reads[k]
 
-            # Compute the number of sites that pass this threshold
-            num_sites_that_pass <- compute_number_of_sites_that_pass_filter(ref_counts,total_counts, sample_info, number_of_heterozygous_lines_i, fraction_of_biallelic_samples_i, min_reads)
+                # Compute the number of sites that pass this threshold
+                num_sites_that_pass <- compute_number_of_sites_that_pass_filter(ref_counts,total_counts, sample_info, number_of_heterozygous_lines_i, fraction_of_biallelic_samples_i, min_reads_i)
             
-            # Store results
-            number_of_sites <- c(number_of_sites,num_sites_that_pass)
-            number_of_heterozygous_lines <- c(number_of_heterozygous_lines, number_of_heterozygous_lines_i)
-            fraction_of_biallelic_samples <- c(fraction_of_biallelic_samples, fraction_of_biallelic_samples_i)
+                # Store results
+                number_of_sites <- c(number_of_sites,num_sites_that_pass)
+                number_of_heterozygous_lines <- c(number_of_heterozygous_lines, number_of_heterozygous_lines_i)
+                fraction_of_biallelic_samples <- c(fraction_of_biallelic_samples, fraction_of_biallelic_samples_i)
+                min_num_reads <- c(min_num_reads,min_reads_i)
+            }
         }
     }
 
 
-    df <- data.frame(number_of_sites = number_of_sites, number_of_heterozygous_lines = factor(number_of_heterozygous_lines), fraction_of_biallelic_samples = factor(fraction_of_biallelic_samples))
+    df <- data.frame(number_of_sites = number_of_sites,number_of_reads = factor(min_num_reads), number_of_heterozygous_lines = factor(number_of_heterozygous_lines), fraction_of_biallelic_samples = factor(fraction_of_biallelic_samples))
 
     #PLOT
-    line_plot <- ggplot(df, aes(x=number_of_heterozygous_lines, y=number_of_sites, group=fraction_of_biallelic_samples)) + geom_line(aes(color=fraction_of_biallelic_samples)) +
+    line_plot <- ggplot(df, aes(x=number_of_heterozygous_lines, y=number_of_sites, colour=fraction_of_biallelic_samples, shape=number_of_reads, group=interaction(fraction_of_biallelic_samples,number_of_reads))) + geom_line() +
                 geom_point(aes(color=fraction_of_biallelic_samples)) +
                 theme(text = element_text(size=16), panel.grid.major = element_blank(), panel.grid.minor = element_blank(),panel.background = element_blank(), axis.line = element_line(colour = "black")) +
-                labs(colour="Min % biallelic",x = "Min # of het cell lines", y = "Number of sites") + ylim(0,14000)
+                labs(colour="Min % biallelic", shape = "Min reads",x = "Min # of het cell lines", y = "Number of sites") + ylim(0,14000)
     ggsave(line_plot, file=output_file,width = 15,height=10.5,units="cm")
 }
 
@@ -332,13 +339,7 @@ number_of_expressed_het_snps_per_individual_cell_line_binned(total_counts, numbe
 # Experiment with number of heterozygous sites that remain when we use various filters.
 # Specifically wish to vary:
 ### a. Minimum number of cell lines heterozygous
-### b. Minimum fraction of remaining samples that have bi-allelic expression (fewer than 3 reads mapping, or less than 1% of reads mapping to one allele)
-min_reads<-1
-number_of_heterozygous_sites_after_filters_output_file <- paste0(visualize_allelic_counts_dir, "number_of_heterozygous_sites_at_various_filters_lineplot_min_reads_",min_reads,"_",het_thresh,".png")
-number_of_heterozygous_sites_at_various_filters_lineplot(ref_counts, total_counts, sample_info, number_of_heterozygous_sites_after_filters_output_file, het_thresh, min_reads)
-min_reads<-2
-number_of_heterozygous_sites_after_filters_output_file <- paste0(visualize_allelic_counts_dir, "number_of_heterozygous_sites_at_various_filters_lineplot_min_reads_",min_reads,"_",het_thresh,".png")
-number_of_heterozygous_sites_at_various_filters_lineplot(ref_counts, total_counts, sample_info, number_of_heterozygous_sites_after_filters_output_file, het_thresh, min_reads)
-min_reads<-3
-number_of_heterozygous_sites_after_filters_output_file <- paste0(visualize_allelic_counts_dir, "number_of_heterozygous_sites_at_various_filters_lineplot_min_reads_",min_reads,"_",het_thresh,".png")
-number_of_heterozygous_sites_at_various_filters_lineplot(ref_counts, total_counts, sample_info, number_of_heterozygous_sites_after_filters_output_file, het_thresh, min_reads)
+### b. Minimum fraction of remaining samples that have bi-allelic expression (fewer than n reads mapping, or less than 1% of reads mapping to one allele)
+### c. The n reads in step b
+number_of_heterozygous_sites_after_filters_output_file <- paste0(visualize_allelic_counts_dir, "number_of_heterozygous_sites_at_various_filters_lineplot_min_reads_",het_thresh,".png")
+number_of_heterozygous_sites_at_various_filters_lineplot(ref_counts, total_counts, sample_info, number_of_heterozygous_sites_after_filters_output_file, het_thresh)
