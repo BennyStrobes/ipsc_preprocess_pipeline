@@ -1,4 +1,4 @@
-# ipsc Preprocess Pipeline
+# ipsc preprocess pipeline
 
 This pipeline processes/quantifies the fastq files to organized allelic count matrices & quantile normalized expression matrices. It can be run through 'preprocess_driver.key.sh'
 'preprocess_driver.key.sh' splits pipeline into 7 steps that can be run in series (all the user has to do is remove the if false; then code arround the desired part). The code is well-commented so it should be clear from 'preprocess_driver_key'.sh' what each section does.
@@ -26,7 +26,7 @@ As for important output files from this pipeline (using dir_names defined in 'pr
 	9. $processed_allelic_counts_dir"allelic_counts_gene_mapped_het_prob_*.txt" where * is the heterozygous probability threshold used to call heterozygous sites. I computed this matrices for a bunch of different thresholds. This matrix contains refAlleleCounts_totalCounts in each cell. Currently no filtering on sites (this will be changed)
 
 	10. $visualize_allelic_counts_dir contains plots describing allelic count quantification
-	
+
 	11. $fastq_input_dir"fastq_mapping.txt" contains list of mapping from sample_ids (cellLine_timeStep) to fastq files composing those samples
 
 
