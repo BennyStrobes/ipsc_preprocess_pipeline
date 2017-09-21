@@ -127,8 +127,13 @@ genotype_dir = sys.argv[3]
 het_prob_file = genotype_dir + 'YRI_het_prob_genotype.vcf'
 
 het_prob_histogram(het_prob_file, output_dir + 'het_prob_histogram.png', input_dir + 'allelic_counts_gene_mapped_het_prob_999.txt')
-
 # percent_biallelic_het_snps_scatter( input_dir + 'allelic_counts_gene_mapped_het_prob_9.txt', output_dir + 'percent_biallelic_het_snps_scatter.png')
+
+
+
+
+
+
 
 het_threshs = [.55, .6, .65, .7, .75, .8, .85, .9, .95,.99,.999]  # Various heterozygous thresholds we picked
 #het_threshs= [.55]

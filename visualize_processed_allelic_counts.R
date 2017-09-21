@@ -216,6 +216,67 @@ number_of_expressed_het_snps_per_individual_cell_line_binned <- function(total_c
 }
 
 
+compute_number_of_sites_that_pass_filter <- function(ref_counts,total_counts, sample_info, number_of_heterozygous_lines_i, fraction_of_biallelic_samples_i, min_reads) {
+    ordered_cell_lines <- factor(sample_info$cell_line)
+    # Keep track of number of sites that pass
+    num_sites_that_pass <- 0
+
+
+
+    aa <- rowSums(total_counts >= min_reads & ref_counts/total_counts >= .01 & (total_counts-ref_counts)/total_counts >= .01,na.rm=TRUE)
+    bb <- rowSums(!is.na(total_counts))
+    biallelic_fractions <- aa/bb
+
+    num_cell_lines_with_het_sites <- ceiling(bb/16)
+
+    num_sites_that_pass <- sum(biallelic_fractions >= fraction_of_biallelic_samples_i & num_cell_lines_with_het_sites >= number_of_heterozygous_lines_i)
+
+    return(num_sites_that_pass)
+}
+
+# Experiment with number of heterozygous sites that remain when we use various filters.
+# Specifically wish to vary:
+### a. Minimum number of cell lines heterozygous
+### b. Minimum fraction of remaining samples that have bi-allelic expression (fewer than 3 reads mapping, or less than 1% of reads mapping to one allele)
+number_of_heterozygous_sites_at_various_filters_lineplot <- function(ref_counts, total_counts, sample_info, output_file, het_thresh,min_reads) {
+    # Keep track of quantities of interest
+    number_of_sites <- c()
+    number_of_heterozygous_lines <- c()
+    fraction_of_biallelic_samples <- c()
+
+    #num_het_lines <- c(6,7,8,9,10)
+    #fraction_of_samples <- c(.6,.7,.8,.9)
+    num_het_lines <- c(4,5,6,7,8,9)
+    fraction_of_samples <- c(.5,.6,.7,.8,.9)
+    for (i in 1:length(num_het_lines)) {
+        for (j in 1:length(fraction_of_samples)) {
+            # Threshold for min number of heterozygous cell lines
+            number_of_heterozygous_lines_i <- num_het_lines[i]
+            # Threshold for min fraction of heterozygous samples that show biallelic expression
+            fraction_of_biallelic_samples_i <- fraction_of_samples[j]
+
+            # Compute the number of sites that pass this threshold
+            num_sites_that_pass <- compute_number_of_sites_that_pass_filter(ref_counts,total_counts, sample_info, number_of_heterozygous_lines_i, fraction_of_biallelic_samples_i, min_reads)
+            
+            # Store results
+            number_of_sites <- c(number_of_sites,num_sites_that_pass)
+            number_of_heterozygous_lines <- c(number_of_heterozygous_lines, number_of_heterozygous_lines_i)
+            fraction_of_biallelic_samples <- c(fraction_of_biallelic_samples, fraction_of_biallelic_samples_i)
+        }
+    }
+
+
+    df <- data.frame(number_of_sites = number_of_sites, number_of_heterozygous_lines = factor(number_of_heterozygous_lines), fraction_of_biallelic_samples = factor(fraction_of_biallelic_samples))
+
+    #PLOT
+    line_plot <- ggplot(df, aes(x=number_of_heterozygous_lines, y=number_of_sites, group=fraction_of_biallelic_samples)) + geom_line(aes(color=fraction_of_biallelic_samples)) +
+                geom_point(aes(color=fraction_of_biallelic_samples)) +
+                theme(text = element_text(size=16), panel.grid.major = element_blank(), panel.grid.minor = element_blank(),panel.background = element_blank(), axis.line = element_line(colour = "black")) +
+                labs(colour="Min % biallelic",x = "Min # of het cell lines", y = "Number of sites") + ylim(0,14000)
+    ggsave(line_plot, file=output_file,width = 15,height=10.5,units="cm")
+}
+
+
 # Command line arguments
 processed_allelic_counts_dir = args[1]  # Contains allelic counts
 visualize_allelic_counts_dir = args[2]  # Directory to save output files to
@@ -259,7 +320,6 @@ percent_biallelic_ouptut_file <- paste0(visualize_allelic_counts_dir, "percent_b
 
 
 
-
 # Make boxplot of number of expressed het-snps per individual with one box for every read cutoff (that defines what is an expressed het-snp)
 number_of_expressed_het_snps_output_file <- paste0(visualize_allelic_counts_dir, "number_of_expressed_het_snps_per_individual_boxplot_",het_thresh,".png")
 #number_of_expressed_het_snps_per_individual(total_counts, number_of_expressed_het_snps_output_file, het_thresh)
@@ -268,3 +328,17 @@ number_of_expressed_het_snps_output_file <- paste0(visualize_allelic_counts_dir,
 number_of_expressed_het_snps_output_file <- paste0(visualize_allelic_counts_dir, "number_of_expressed_het_snps_per_individual_cell_line_boxplot_",het_thresh,".png")
 number_of_expressed_het_snps_per_individual_cell_line_binned(total_counts, number_of_expressed_het_snps_output_file, het_thresh)
 
+
+# Experiment with number of heterozygous sites that remain when we use various filters.
+# Specifically wish to vary:
+### a. Minimum number of cell lines heterozygous
+### b. Minimum fraction of remaining samples that have bi-allelic expression (fewer than 3 reads mapping, or less than 1% of reads mapping to one allele)
+min_reads<-1
+number_of_heterozygous_sites_after_filters_output_file <- paste0(visualize_allelic_counts_dir, "number_of_heterozygous_sites_at_various_filters_lineplot_min_reads_",min_reads,"_",het_thresh,".png")
+number_of_heterozygous_sites_at_various_filters_lineplot(ref_counts, total_counts, sample_info, number_of_heterozygous_sites_after_filters_output_file, het_thresh, min_reads)
+min_reads<-2
+number_of_heterozygous_sites_after_filters_output_file <- paste0(visualize_allelic_counts_dir, "number_of_heterozygous_sites_at_various_filters_lineplot_min_reads_",min_reads,"_",het_thresh,".png")
+number_of_heterozygous_sites_at_various_filters_lineplot(ref_counts, total_counts, sample_info, number_of_heterozygous_sites_after_filters_output_file, het_thresh, min_reads)
+min_reads<-3
+number_of_heterozygous_sites_after_filters_output_file <- paste0(visualize_allelic_counts_dir, "number_of_heterozygous_sites_at_various_filters_lineplot_min_reads_",min_reads,"_",het_thresh,".png")
+number_of_heterozygous_sites_at_various_filters_lineplot(ref_counts, total_counts, sample_info, number_of_heterozygous_sites_after_filters_output_file, het_thresh, min_reads)

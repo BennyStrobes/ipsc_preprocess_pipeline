@@ -1,12 +1,11 @@
-#Ben Strober
-#bstrober3@gmail.com
+# ipsc Preprocess Pipeline
 
-All of the code for processing/quantifying the fastq files to organized allelic count matrices & quantile normalized expression matrices can be run through 'preprocess_driver.key.sh'
-
+This pipeline processes/quantifies the fastq files to organized allelic count matrices & quantile normalized expression matrices. It can be run through 'preprocess_driver.key.sh'
 'preprocess_driver.key.sh' splits pipeline into 7 steps that can be run in series (all the user has to do is remove the if false; then code arround the desired part). The code is well-commented so it should be clear from 'preprocess_driver_key'.sh' what each section does.
 
+## Deliverables
 
-As for important deliverables from this code (using dir_names defined in 'preprocess_driver_key.sh':
+As for important output files from this pipeline (using dir_names defined in 'preprocess_driver_key.sh':
 	1. $preprocess_total_expression_dir"quantile_normalized.txt" contains quantile normalized expression matrices for all samples across all protein-coding autosomal genes that have at least 10 samples such that RPKM >= .1 and counts >= 6.
 	2. $preprocess_total_expression_dir"rpkm.txt" contains raw rpkm expression matrices for all samples across alll protein-coding autosomal genes that have at least 10 samples such that RPKM >= .1 and counts >= 6
 	3. $covariate_dir"principal_components_10.txt" contains matrix for loadings of first 10 PCs for all samples
@@ -19,6 +18,13 @@ As for important deliverables from this code (using dir_names defined in 'prepro
 	10. $visualize_allelic_counts_dir contains plots describing allelic count quantification
 	11. $fastq_input_dir"fastq_mapping.txt" contains list of mapping from sample_ids (cellLine_timeStep) to fastq files composing those samples
 
-The code is not perfect, but I think the commenting is pretty throurough. 
 
-Obvously let me know if something isn't clear or you think you found a mistake!
+Let me know if something isn't clear or you think you found a mistake!
+
+## Computer cluster
+
+This pipeline was written to run on midway rcc
+
+## Authors
+
+* **Ben Strober** -- [BennyStrobes](https://github.com/BennyStrobes)
