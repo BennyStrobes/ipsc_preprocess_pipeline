@@ -7,10 +7,15 @@ This pipeline processes/quantifies the fastq files to organized allelic count ma
 
 As for important output files from this pipeline (using dir_names defined in 'preprocess_driver_key.sh':
 	1. $preprocess_total_expression_dir"quantile_normalized.txt" contains quantile normalized expression matrices for all samples across all protein-coding autosomal genes that have at least 10 samples such that RPKM >= .1 and counts >= 6.
+
 	2. $preprocess_total_expression_dir"rpkm.txt" contains raw rpkm expression matrices for all samples across alll protein-coding autosomal genes that have at least 10 samples such that RPKM >= .1 and counts >= 6
+
 	3. $covariate_dir"principal_components_10.txt" contains matrix for loadings of first 10 PCs for all samples
+
 	4. $covariate_dir"processed_covariates_categorical.txt" contains an organized matrix of covariates
+	
 	5. $covariate_dir"sva_loadings.txt" contains results of running sva (while inputting time to allow sva to make factors independent of time)
+
 	6. $visualize_total_expression_dir: a lot of plots describing total expression quantification
 	7. $genotype_dir"YRI_genotype.vcf": imputed-dosage based genotypes for our 10 cell lines
 	8. $genotype_dir"YRI_het_prob_genotype.vcf": heterozygous probabilities for our 10 cell lines (based on impute2)
