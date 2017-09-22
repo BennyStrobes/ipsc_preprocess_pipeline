@@ -1,4 +1,6 @@
-# ipsc preprocess pipeline
+# ipsc preprocess pipeline (9/22/17)
+
+This pipeline differs from the master branch. The master removed samples 19209_2 and 19209_13
 
 This pipeline processes/quantifies the fastq files to organized allelic count matrices & quantile normalized expression matrices. It can be run through 'preprocess_driver.key.sh'
 'preprocess_driver.key.sh' splits pipeline into 7 steps that can be run in series (all the user has to do is remove the if false; then code arround the desired part). The code is well-commented so it should be clear from 'preprocess_driver_key'.sh' what each section does.
