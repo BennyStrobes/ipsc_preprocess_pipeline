@@ -105,7 +105,7 @@ sample_swap_check_dir="/project2/gilad/bstrober/ipsc_differentiation/preprocess/
 # Note: This code really isn't the best b/c it very manually parses the fastq files based on the lane_design files. So caution should be taken in applying merge_fastq_replicates to new situations.
 # Takes about 20 minutes to run
 if false; then
-sbatch merge_fastq_replicates.sh $fastq_round_1_input_dir $fastq_round_2_input_dir $lane_design_round_1_file $lane_design_round_2_file $fastq_input_dir"2"
+sh merge_fastq_replicates.sh $fastq_round_1_input_dir $fastq_round_2_input_dir $lane_design_round_1_file $lane_design_round_2_file $fastq_input_dir
 fi
 
 ##Part 2
@@ -195,10 +195,9 @@ fi
 ######### 2. Map the sites to protein coding genes and remove sites that don't lie on a protein-coding gene
 ######### 3. For various heterozygous probability thresholds, place NA for (sample,site) pairs that have het. prob less than specified threshold
 ######### 4. Apply various filters for sites based on number of samples that we have mapped read counts to a het. site (etc)
+if false; then
 sh process_and_organize_allelic_counts.sh $raw_allelic_counts_dir $processed_allelic_counts_dir $genotype_dir $preprocess_total_expression_dir $gencode_gene_annotation_file $visualize_allelic_counts_dir
-
-
-
+fi
 
 
 

@@ -133,6 +133,10 @@ for cell_line in cell_lines.keys():
             continue
         if cell_line == '18520' and time_step == 2:  # Don't have this time point
             continue
+        if cell_line == '19209' and time_step == 2:  # This time point is contaminated
+            continue
+        if cell_line == '19209' and time_step == 13:  # This time point is contaminated
+            continue
         sample_id = cell_line + '_' + str(time_step)
         mapping[sample_id] = []  # Initialize sampleID in mapping
         mapping = create_sample_id_to_fastqs_mapping(mapping, sample_id, cell_line, time_step, fastq_round_1_input_dir, fastq_round_2_input_dir, lane_design_round_1_file, lane_design_round_2_file)
