@@ -49,44 +49,44 @@ gencode_gene_annotation_file="/project2/gilad/bstrober/ipsc_differentiation/prep
 ################################################################################################################################################################
 
 #  Directory containing merged (across sequencing rounds) fastq files for each sample
-fastq_input_dir="/project2/gilad/bstrober/ipsc_differentiation/preprocess/fastq/"
+fastq_input_dir="/project2/gilad/bstrober/ipsc_differentiation/preprocess_old_cp_9_22_17/fastq/"
 
 #  Directory containing fastqc results. One output file for every fastq input file
-fastqc_dir="/project2/gilad/bstrober/ipsc_differentiation/preprocess/fastqc_data/"
+fastqc_dir="/project2/gilad/bstrober/ipsc_differentiation/preprocess_old_cp_9_22_17/fastqc_data/"
 
 #  Directory containing reference genome (GRCh37)
-genome_dir="/project2/gilad/bstrober/ipsc_differentiation/preprocess/genome/"
+genome_dir="/project2/gilad/bstrober/ipsc_differentiation/preprocess_old_cp_9_22_17/genome/"
 
 #  Directory containing bams. One bam file for each sample.
-bam_dir="/project2/gilad/bstrober/ipsc_differentiation/preprocess/bam/"
+bam_dir="/project2/gilad/bstrober/ipsc_differentiation/preprocess_old_cp_9_22_17/bam/"
 
 
 #  Directory containing processed counts, quantile normalized expression data
-preprocess_total_expression_dir="/project2/gilad/bstrober/ipsc_differentiation/preprocess/processed_total_expression/"
+preprocess_total_expression_dir="/project2/gilad/bstrober/ipsc_differentiation/preprocess_old_cp_9_22_17/processed_total_expression/"
 
 #  Directory containing covariate information (covariates, PCs)
-covariate_dir="/project2/gilad/bstrober/ipsc_differentiation/preprocess/covariates/"
+covariate_dir="/project2/gilad/bstrober/ipsc_differentiation/preprocess_old_cp_9_22_17/covariates/"
 
 #  Directory containing plots/figures related to exploratory analysis of the total expression data (preprocess_total_expression_dir)
-visualize_total_expression_dir="/project2/gilad/bstrober/ipsc_differentiation/preprocess/visualize_total_expression/"
+visualize_total_expression_dir="/project2/gilad/bstrober/ipsc_differentiation/preprocess_old_cp_9_22_17/visualize_total_expression/"
 
 #  Directory containing various changes to $genotype_input so that it is ammendable to the software pipelines used to process allelic counts (ie WASP and GATK ASEReader)
-genotype_dir="/project2/gilad/bstrober/ipsc_differentiation/preprocess/genotype/"
+genotype_dir="/project2/gilad/bstrober/ipsc_differentiation/preprocess_old_cp_9_22_17/genotype/"
 
 #  Directory to contain various intermediate files developed by the WASP pipeline (many derivatives of the initial bams..)
-wasp_intermediate_dir="/project2/gilad/bstrober/ipsc_differentiation/preprocess/wasp_intermediate_files/"
+wasp_intermediate_dir="/project2/gilad/bstrober/ipsc_differentiation/preprocess_old_cp_9_22_17/wasp_intermediate_files/"
 
 #  Directory containing raw allelic counts
-raw_allelic_counts_dir="/project2/gilad/bstrober/ipsc_differentiation/preprocess/raw_allelic_counts/"
+raw_allelic_counts_dir="/project2/gilad/bstrober/ipsc_differentiation/preprocess_old_cp_9_22_17/raw_allelic_counts/"
 
 #  Directory containing processed allelic counts
-processed_allelic_counts_dir="/project2/gilad/bstrober/ipsc_differentiation/preprocess/processed_allelic_counts/"
+processed_allelic_counts_dir="/project2/gilad/bstrober/ipsc_differentiation/preprocess_old_cp_9_22_17/processed_allelic_counts/"
 
 #  Directory containing plots/figures related to exploratory analysis of the total expression data (preprocess_total_expression_dir)
-visualize_allelic_counts_dir="/project2/gilad/bstrober/ipsc_differentiation/preprocess/visualize_allelic_counts/"
+visualize_allelic_counts_dir="/project2/gilad/bstrober/ipsc_differentiation/preprocess_old_cp_9_22_17/visualize_allelic_counts/"
 
 
-sample_swap_check_dir="/project2/gilad/bstrober/ipsc_differentiation/preprocess/debug_sample_swap/"
+sample_swap_check_dir="/project2/gilad/bstrober/ipsc_differentiation/preprocess_old_cp_9_22_17/debug_sample_swap/"
 
 
 
