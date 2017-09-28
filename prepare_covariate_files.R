@@ -247,8 +247,39 @@ convert_from_date_to_days <- function(array) {
     return(day)
 }
 
+# Now add average expression of marker genes in late time points (cardiomyocytes) to covariate_info data structure
+add_average_cardiomyocyte_expression_of_gene <- function(covariate_info,quant_expr, ensamble_id, gene_name) {
+    N <- dim(covariate_info)[1]
+    covariate_info$my_var <- numeric(N)
 
-process_and_save_covariates_categorical <- function(sample_info, raw_covariates, multiqc, cov_output_file) {
+    # Add name to column
+    colnames(covariate_info)[length(colnames(covariate_info))] <- gene_name
+
+    # Row corresponding to gene of interest
+    row_label <- which(rownames(quant_expr) == ensamble_id)
+    # Get matrix into correct format
+    quant_expr <- as.matrix(quant_expr)
+
+    # Extract vector of gene of interest
+    gene_expression <- quant_expr[row_label,]
+
+    temp_col_num <- length(colnames(covariate_info))
+    for (n in 1:N) {
+        # Extract cell line of nth sample
+        cell_line_n <- covariate_info$cell_line[n]
+
+        # Sample indices corresponding to the nth cell line for only time points after time step 10
+        sample_indices <- covariate_info$cell_line == cell_line_n & covariate_info$time >= 10
+
+        # Take mean expression of desired points
+        covariate_info[n, temp_col_num] <- mean(gene_expression[sample_indices])
+    }
+    return(covariate_info)
+
+}
+
+
+process_and_save_covariates_categorical <- function(sample_info, raw_covariates, multiqc, cov_output_file, quant_expr) {
     # Initialize covariate matrix to be a copy of sample_info
     covariate_info <- sample_info
     # Number of samples
@@ -287,6 +318,10 @@ process_and_save_covariates_categorical <- function(sample_info, raw_covariates,
     covariate_info <- add_multiqc_covariate(covariate_info, multiqc, 4, "average_sequence_length")
     covariate_info <- add_multiqc_covariate(covariate_info, multiqc, 5, "total_sequences")
     covariate_info <- add_multiqc_covariate(covariate_info, multiqc, 6, "percent_fails")
+
+    # Now add average expression of marker genes in late time points (cardiomyocytes)
+    covariate_info <- add_average_cardiomyocyte_expression_of_gene(covariate_info, quant_expr, "ENSG00000118194", "Troponin_mRNA_expression")
+    covariate_info <- add_average_cardiomyocyte_expression_of_gene(covariate_info, quant_expr, "ENSG00000181449", "sox2_mRNA_expression")
 
 
     # Remove un-informative columns
@@ -356,5 +391,5 @@ save_sva(sample_info, quant_expr, sva_output_file)
 
 
 cov_output_file <- paste0(covariate_dir, "processed_covariates_categorical.txt")
-process_and_save_covariates_categorical(sample_info, raw_covariates, multiqc, cov_output_file)
+process_and_save_covariates_categorical(sample_info, raw_covariates, multiqc, cov_output_file, quant_expr)
 
