@@ -195,8 +195,9 @@ fi
 ######### 2. Map the sites to protein coding genes and remove sites that don't lie on a protein-coding gene
 ######### 3. For various heterozygous probability thresholds, place NA for (sample,site) pairs that have het. prob less than specified threshold
 ######### 4. Apply various filters for sites based on number of samples that we have mapped read counts to a het. site (etc)
+if false; then
 sbatch process_and_organize_allelic_counts.sh $raw_allelic_counts_dir $processed_allelic_counts_dir $genotype_dir $preprocess_total_expression_dir $gencode_gene_annotation_file $visualize_allelic_counts_dir
-
+fi
 
 
 
