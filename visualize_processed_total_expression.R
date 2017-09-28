@@ -928,7 +928,7 @@ covariates <- read.table(covariate_file,header=TRUE)
 # Run Analysis / Create Plots
 #####################################################################################################
 
-
+print("START")
 
 ####################################################################
 # Plot library size
@@ -937,7 +937,7 @@ covariates <- read.table(covariate_file,header=TRUE)
 ################
 # Make barplot showing library sizes of each sample
 library_size_output_file <- paste0(visualize_total_expression_dir, "library_size.pdf")
-plot_library_size(sample_info, library_size_output_file)
+#plot_library_size(sample_info, library_size_output_file)
 
 
 
@@ -948,7 +948,7 @@ plot_library_size(sample_info, library_size_output_file)
 ##################
 #  Perform PCA. Plot first 2 pcs as a function of time step 
 pca_plot_time_step_output_file <- paste0(visualize_total_expression_dir, "pca_plot_1_2_time_step.pdf")
-plot_pca_time_step(sample_info, quant_expr, pca_plot_time_step_output_file)
+#plot_pca_time_step(sample_info, quant_expr, pca_plot_time_step_output_file)
 
 
 
@@ -961,28 +961,28 @@ pc_num2 <- 2
 ensamble_id <- "ENSG00000118194"
 gene_name <- "Troponin"
 pca_plot_gene_filled_output_file <- paste0(visualize_total_expression_dir, "pca_plot_",pc_num1,"_",pc_num2,"_",gene_name,"_gene_filled.pdf")
-plot_pca_real_valued_gene_filled(sample_info, quant_expr, ensamble_id,gene_name,pc_num1,pc_num2,pca_plot_gene_filled_output_file)
+#plot_pca_real_valued_gene_filled(sample_info, quant_expr, ensamble_id,gene_name,pc_num1,pc_num2,pca_plot_gene_filled_output_file)
 
 pc_num1 <- 2
 pc_num2 <- 3
 ensamble_id <- "ENSG00000118194"
 gene_name <- "Troponin"
 pca_plot_gene_filled_output_file <- paste0(visualize_total_expression_dir, "pca_plot_",pc_num1,"_",pc_num2,"_",gene_name,"_gene_filled.pdf")
-plot_pca_real_valued_gene_filled(sample_info, quant_expr, ensamble_id,gene_name,pc_num1,pc_num2,pca_plot_gene_filled_output_file)
+#plot_pca_real_valued_gene_filled(sample_info, quant_expr, ensamble_id,gene_name,pc_num1,pc_num2,pca_plot_gene_filled_output_file)
 
 pc_num1 <- 1
 pc_num2 <- 2
 ensamble_id <- "ENSG00000181449"
 gene_name <- "sox2"
 pca_plot_gene_filled_output_file <- paste0(visualize_total_expression_dir, "pca_plot_",pc_num1,"_",pc_num2,"_",gene_name,"_gene_filled.pdf")
-plot_pca_real_valued_gene_filled(sample_info, quant_expr, ensamble_id,gene_name,pc_num1,pc_num2,pca_plot_gene_filled_output_file)
+#plot_pca_real_valued_gene_filled(sample_info, quant_expr, ensamble_id,gene_name,pc_num1,pc_num2,pca_plot_gene_filled_output_file)
 
 pc_num1 <- 2
 pc_num2 <- 3
 ensamble_id <- "ENSG00000181449"
 gene_name <- "sox2"
 pca_plot_gene_filled_output_file <- paste0(visualize_total_expression_dir, "pca_plot_",pc_num1,"_",pc_num2,"_",gene_name,"_gene_filled.pdf")
-plot_pca_real_valued_gene_filled(sample_info, quant_expr, ensamble_id,gene_name,pc_num1,pc_num2,pca_plot_gene_filled_output_file)
+#plot_pca_real_valued_gene_filled(sample_info, quant_expr, ensamble_id,gene_name,pc_num1,pc_num2,pca_plot_gene_filled_output_file)
 
 
 
@@ -997,16 +997,16 @@ pc_num1 <- 1
 pc_num2 <- 2
 
 pca_plot_cell_line_output_file <- paste0(visualize_total_expression_dir, "pca_plot_",pc_num1,"_",pc_num2,"_cell_line.pdf")
-plot_pca_categorical_covariate(sample_info, quant_expr, pca_plot_cell_line_output_file,factor(sample_info$cell_line), "cell_line", pc_num1,pc_num2)
+#plot_pca_categorical_covariate(sample_info, quant_expr, pca_plot_cell_line_output_file,factor(sample_info$cell_line), "cell_line", pc_num1,pc_num2)
 
 pca_plot_cell_line_output_file <- paste0(visualize_total_expression_dir, "pca_plot_",pc_num1,"_",pc_num2,"_rna_extraction_persion.pdf")
-plot_pca_categorical_covariate(sample_info, quant_expr, pca_plot_cell_line_output_file,factor(covariates$RNA_extraction_person), "rna_extraction_person", pc_num1,pc_num2)
+#plot_pca_categorical_covariate(sample_info, quant_expr, pca_plot_cell_line_output_file,factor(covariates$RNA_extraction_person), "rna_extraction_person", pc_num1,pc_num2)
 
 pca_plot_cell_line_output_file <- paste0(visualize_total_expression_dir, "pca_plot_",pc_num1,"_",pc_num2,"_rna_extraction_round.pdf")
-plot_pca_categorical_covariate(sample_info, quant_expr, pca_plot_cell_line_output_file,factor(covariates$RNA_extraction_round), "rna_extraction_round", pc_num1,pc_num2)
+#plot_pca_categorical_covariate(sample_info, quant_expr, pca_plot_cell_line_output_file,factor(covariates$RNA_extraction_round), "rna_extraction_round", pc_num1,pc_num2)
 
 pca_plot_cell_line_output_file <- paste0(visualize_total_expression_dir, "pca_plot_",pc_num1,"_",pc_num2,"_differentiation_batch.pdf")
-plot_pca_categorical_covariate(sample_info, quant_expr, pca_plot_cell_line_output_file,factor(covariates$differentiation_batch), "differentiation_batch", pc_num1,pc_num2)
+#plot_pca_categorical_covariate(sample_info, quant_expr, pca_plot_cell_line_output_file,factor(covariates$differentiation_batch), "differentiation_batch", pc_num1,pc_num2)
 
 
 #################
@@ -1015,18 +1015,18 @@ plot_pca_categorical_covariate(sample_info, quant_expr, pca_plot_cell_line_outpu
 pc_num1<-1
 pc_num2<-2
 pca_plot_cell_line_output_file <- paste0(visualize_total_expression_dir, "pca_plot_",pc_num1,"_",pc_num2,"_seperate_cell_lines.pdf")
-plot_pca_seperate_cell_lines(sample_info, quant_expr, pca_plot_cell_line_output_file,pc_num1,pc_num2)
+#plot_pca_seperate_cell_lines(sample_info, quant_expr, pca_plot_cell_line_output_file,pc_num1,pc_num2)
 
 pc_num1<-2
 pc_num2<-3
 pca_plot_cell_line_output_file <- paste0(visualize_total_expression_dir, "pca_plot_",pc_num1,"_",pc_num2,"_seperate_cell_lines.pdf")
-plot_pca_seperate_cell_lines(sample_info, quant_expr, pca_plot_cell_line_output_file,pc_num1,pc_num2)
+#plot_pca_seperate_cell_lines(sample_info, quant_expr, pca_plot_cell_line_output_file,pc_num1,pc_num2)
 
 #################
 # Perform PCA. Plot variance explained of the first n PCs:
 n <- 20
 pca_plot_variance_explained_output_file <- paste0(visualize_total_expression_dir, "pca_plot_variance_explained", n, ".pdf")
-plot_pca_variance_explained(sample_info, quant_expr, n, pca_plot_variance_explained_output_file)
+#plot_pca_variance_explained(sample_info, quant_expr, n, pca_plot_variance_explained_output_file)
 
 
 
@@ -1038,12 +1038,12 @@ plot_pca_variance_explained(sample_info, quant_expr, n, pca_plot_variance_explai
 ensamble_id <- "ENSG00000118194"
 gene_name <- "Troponin"
 line_plot_file <- paste0(visualize_total_expression_dir, gene_name,"_time_course_grouped_by_cell_line.pdf")
-gene_time_course_line_plot_grouped_by_cell_line(sample_info, quant_expr, ensamble_id, gene_name, line_plot_file)
+#gene_time_course_line_plot_grouped_by_cell_line(sample_info, quant_expr, ensamble_id, gene_name, line_plot_file)
 
 ensamble_id <- "ENSG00000181449"
 gene_name <- "sox2"
 line_plot_file <- paste0(visualize_total_expression_dir, gene_name,"_time_course_grouped_by_cell_line.pdf")
-gene_time_course_line_plot_grouped_by_cell_line(sample_info, quant_expr, ensamble_id, gene_name, line_plot_file)
+#gene_time_course_line_plot_grouped_by_cell_line(sample_info, quant_expr, ensamble_id, gene_name, line_plot_file)
 
 
 
@@ -1057,7 +1057,7 @@ time_step <- 15
 pc_num <- 2
 
 pc_gene_scatter_output_file <- paste0(visualize_total_expression_dir, "pc_num_", pc_num, "_",gene_name,"_time_step_",time_step,"_scatter.pdf")
-pc_gene_scatter(sample_info, quant_expr, ensamble_id, gene_name, time_step, pc_num, pc_gene_scatter_output_file)
+#pc_gene_scatter(sample_info, quant_expr, ensamble_id, gene_name, time_step, pc_num, pc_gene_scatter_output_file)
 
 
 ensamble_id <- "ENSG00000181449"
@@ -1066,7 +1066,7 @@ time_step <- 15
 pc_num <- 2
 
 pc_gene_scatter_output_file <- paste0(visualize_total_expression_dir, "pc_num_", pc_num, "_",gene_name,"_time_step_",time_step,"_scatter.pdf")
-pc_gene_scatter(sample_info, quant_expr, ensamble_id, gene_name, time_step, pc_num, pc_gene_scatter_output_file)
+#pc_gene_scatter(sample_info, quant_expr, ensamble_id, gene_name, time_step, pc_num, pc_gene_scatter_output_file)
 
 
 
@@ -1097,14 +1097,14 @@ covariate_pc_specific_genes_pve_heatmap(pc_file, quant_expr, covariate_file,outp
 model_type <- "linear_regression"  # Options are "linear_regression" and "beta_binomial_regression"
 num_genes <- 1000  #  Filter genes to top num_genes with largest variance
 output_file <- paste0(visualize_total_expression_dir, "time_prediction_", model_type, "_", num_genes, ".pdf")
-time_step_prediction_heatmap_plot(sample_info, quant_expr, rpkm_expr, model_type, num_genes, output_file)
+#time_step_prediction_heatmap_plot(sample_info, quant_expr, rpkm_expr, model_type, num_genes, output_file)
 
 
 #  Predict time step of each sample using sparse beta-binomial generalized linear model
 model_type <- "beta_binomial_regression"  # Options are "linear_regression" and "beta_binomial_regression"
 num_genes <- 1000  #  Filter genes to top num_genes with largest variance
 output_file <- paste0(visualize_total_expression_dir, "time_prediction_", model_type, "_", num_genes, ".pdf")
-time_step_prediction_heatmap_plot(sample_info, quant_expr, rpkm_expr, model_type, num_genes, output_file)
+#time_step_prediction_heatmap_plot(sample_info, quant_expr, rpkm_expr, model_type, num_genes, output_file)
 
 
 

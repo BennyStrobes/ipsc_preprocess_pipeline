@@ -17,5 +17,4 @@ visualize_allelic_counts_dir="$6"
 python process_and_organize_allelic_counts.py $raw_allelic_counts_dir $processed_allelic_counts_dir $genotype_dir $preprocess_total_expression_dir $gencode_gene_annotation_file
 
 
-
 Rscript visualize_processed_allelic_counts.R $processed_allelic_counts_dir $visualize_allelic_counts_dir $genotype_dir $preprocess_total_expression_dir
