@@ -320,8 +320,8 @@ process_and_save_covariates_categorical <- function(sample_info, raw_covariates,
     covariate_info <- add_multiqc_covariate(covariate_info, multiqc, 6, "percent_fails")
 
     # Now add average expression of marker genes in late time points (cardiomyocytes)
-    covariate_info <- add_average_cardiomyocyte_expression_of_gene(covariate_info, quant_expr, "ENSG00000118194", "Troponin_mRNA_expression")
-    covariate_info <- add_average_cardiomyocyte_expression_of_gene(covariate_info, quant_expr, "ENSG00000181449", "sox2_mRNA_expression")
+    covariate_info <- add_average_cardiomyocyte_expression_of_gene(covariate_info, quant_expr, "ENSG00000118194", "avg_10_15_troponin_mRNA_expr")
+    covariate_info <- add_average_cardiomyocyte_expression_of_gene(covariate_info, quant_expr, "ENSG00000181449", "avg_10_15_sox2_mRNA_expr")
 
 
     # Remove un-informative columns

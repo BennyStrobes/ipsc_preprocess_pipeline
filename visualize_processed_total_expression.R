@@ -141,6 +141,58 @@ pc_gene_scatter <- function(sample_info, quant_expr, ensamble_id, gene_name, tim
 
 }
 
+
+pc_avg_troponin_scatter_colored_by_cell_line <- function(sample_info, quant_expr, pc_num, covariate_file, output_file) {
+    #  Compute singular value decomposition
+    svd1 <- svd(as.matrix(quant_expr))
+
+    #  Scores of pcs of interest
+    pc_scores <- svd1$v[,pc_num]
+    
+    covs <- read.table(covariate_file, header=TRUE)
+
+    # Remove unimportant columns
+    covs <- data.frame(as.matrix(covs[,3:dim(covs)[2]]))
+
+    covs$avg_10_15_troponin_mRNA_expr <- abs(as.numeric(as.character(covs$avg_10_15_troponin_mRNA_expr)))
+    covs$avg_10_15_sox2_mRNA_expr <- abs(as.numeric(as.character(covs$avg_10_15_sox2_mRNA_expr)))
+
+    df <- data.frame(pc_scores = pc_scores, avg_troponin=covs$avg_10_15_troponin_mRNA_expr, cell_line = factor(sample_info$cell_line),time_step = sample_info$time)
+
+    pca_scatter <- ggplot(df, aes(y = pc_scores, x = avg_troponin, colour = cell_line)) + geom_point() 
+    pca_scatter <- pca_scatter + theme(text = element_text(size=18), panel.grid.major = element_blank(), panel.grid.minor = element_blank(),panel.background = element_blank(), axis.line = element_line(colour = "black")) 
+    pca_scatter <- pca_scatter + labs(colour="Cell Line",x = "avg (t=10-15) troponin mRNA expr", y = paste0("PC",pc_num))
+    ggsave(pca_scatter, file=output_file,width = 15,height=10.5,units="cm")
+
+}
+
+pc_avg_troponin_scatter_colored_by_time_step <- function(sample_info, quant_expr, pc_num, covariate_file, output_file) {
+    #  Compute singular value decomposition
+    svd1 <- svd(as.matrix(quant_expr))
+
+    #  Scores of pcs of interest
+    pc_scores <- svd1$v[,pc_num]
+    
+    covs <- read.table(covariate_file, header=TRUE)
+
+    # Remove unimportant columns
+    covs <- data.frame(as.matrix(covs[,3:dim(covs)[2]]))
+
+    covs$avg_10_15_troponin_mRNA_expr <- abs(as.numeric(as.character(covs$avg_10_15_troponin_mRNA_expr)))
+    covs$avg_10_15_sox2_mRNA_expr <- abs(as.numeric(as.character(covs$avg_10_15_sox2_mRNA_expr)))
+
+    df <- data.frame(pc_scores = pc_scores, avg_troponin=covs$avg_10_15_troponin_mRNA_expr, cell_line = factor(sample_info$cell_line),time_step = sample_info$time)
+
+
+    pca_scatter <- ggplot(df, aes(y = pc_scores, x = avg_troponin, colour = time_step)) + geom_point() 
+    pca_scatter <- pca_scatter + theme(text = element_text(size=18), panel.grid.major = element_blank(), panel.grid.minor = element_blank(),panel.background = element_blank(), axis.line = element_line(colour = "black")) 
+    pca_scatter <- pca_scatter + labs(colour="time step",x = "avg (t=10-15) troponin mRNA expr", y = paste0("PC",pc_num)) + scale_color_gradient(low="pink",high="blue")
+    ggsave(pca_scatter, file=output_file,width = 15,height=10.5,units="cm")
+
+}
+
+
+
 pc_gene_scatter_all_time_colored_by_cell_line <- function(sample_info, quant_expr, ensamble_id, gene_name, pc_num, pc_gene_scatter_output_file) {
     #  Compute singular value decomposition
     svd1 <- svd(as.matrix(quant_expr))
@@ -807,7 +859,7 @@ square_distance_from_mean_driver <- function(sample_info, rpkm_expr_all, metric,
 
 
 
-covariate_pc_pve_heatmap <- function(pc_file, covariate_file, output_file) {
+covariate_pc_pve_heatmap <- function(pc_file, covariate_file, output_file, title) {
     # Load in data
     pcs <- read.table(pc_file, header=TRUE)
     covs <- read.table(covariate_file, header=TRUE)
@@ -832,8 +884,8 @@ covariate_pc_pve_heatmap <- function(pc_file, covariate_file, output_file) {
     covs$average_sequence_length <- as.numeric(as.character(covs$average_sequence_length))
     covs$total_sequences <- as.numeric(as.character(covs$total_sequences))
     covs$percent_fails <- as.numeric(as.character(covs$percent_fails))
-    covs$Troponin_mRNA_expression <- abs(as.numeric(as.character(covs$Troponin_mRNA_expression)))
-    covs$sox2_mRNA_expression <- abs(as.numeric(as.character(covs$sox2_mRNA_expression)))
+    covs$avg_10_15_troponin_mRNA_expr <- abs(as.numeric(as.character(covs$avg_10_15_troponin_mRNA_expr)))
+    covs$avg_10_15_sox2_mRNA_expr <- abs(as.numeric(as.character(covs$avg_10_15_sox2_mRNA_expr)))
 
     # Initialize PVE heatmap
     pve_map <- matrix(0, dim(covs)[2], dim(pcs)[2])
@@ -860,13 +912,17 @@ covariate_pc_pve_heatmap <- function(pc_file, covariate_file, output_file) {
     #  Use factors to represent covariate and pc name
     melted_mat$Covariate <- factor(melted_mat$Covariate, levels = rownames(pve_map)[ord])
     melted_mat$PC <- factor(melted_mat$PC)
-    levels(melted_mat$PC) <- c(levels(melted_mat$PC)[1],levels(melted_mat$PC)[3:10],levels(melted_mat$PC)[2])
-
-
+    if (dim(pcs)[2] == 10) {
+        levels(melted_mat$PC) <- c(levels(melted_mat$PC)[1],levels(melted_mat$PC)[3:10],levels(melted_mat$PC)[2])
+    }
+    if (dim(pcs)[2] == 21) {
+        levels(melted_mat$PC) <- c(levels(melted_mat$PC)[1],levels(melted_mat$PC)[12],levels(melted_mat$PC)[15:21],levels(melted_mat$PC)[2:11], levels(melted_mat$PC)[13:14])
+    }
 
     #  PLOT!
     heatmap <- ggplot(data=melted_mat, aes(x=Covariate, y=PC)) + geom_tile(aes(fill=PVE)) + scale_fill_gradient2(midpoint=-.05, guide="colorbar")
     heatmap <- heatmap + theme(text = element_text(size=14), panel.background = element_blank(), axis.text.x = element_text(angle = 90, vjust=.5))
+    heatmap <- heatmap + labs(y="latent factor", title=title)
 
     # Save File
     ggsave(heatmap, file=output_file,width = 19,height=13.5,units="cm")
@@ -897,6 +953,8 @@ covariate_pc_specific_genes_pve_heatmap <- function(pc_file, quant_expr, covaria
     covs$average_sequence_length <- as.numeric(as.character(covs$average_sequence_length))
     covs$total_sequences <- as.numeric(as.character(covs$total_sequences))
     covs$percent_fails <- as.numeric(as.character(covs$percent_fails))
+    covs$avg_10_15_troponin_mRNA_expr <- abs(as.numeric(as.character(covs$avg_10_15_troponin_mRNA_expr)))
+    covs$avg_10_15_sox2_mRNA_expr <- abs(as.numeric(as.character(covs$avg_10_15_sox2_mRNA_expr)))
 
     # Add specific gene info
     row_label <- which(rownames(quant_expr) == "ENSG00000118194")
@@ -986,7 +1044,7 @@ covariates <- read.table(covariate_file,header=TRUE)
 ################
 # Make barplot showing library sizes of each sample
 library_size_output_file <- paste0(visualize_total_expression_dir, "library_size.pdf")
-plot_library_size(sample_info, library_size_output_file)
+#plot_library_size(sample_info, library_size_output_file)
 
 
 
@@ -1128,11 +1186,23 @@ gene_name <- "Troponin"
 pc_num <- 2
 
 pc_gene_scatter_output_file <- paste0(visualize_total_expression_dir, "pc_num_", pc_num, "_",gene_name,"_colored_by_cell_line_scatter.pdf")
-pc_gene_scatter_all_time_colored_by_cell_line(sample_info, quant_expr, ensamble_id, gene_name, pc_num, pc_gene_scatter_output_file)
+#pc_gene_scatter_all_time_colored_by_cell_line(sample_info, quant_expr, ensamble_id, gene_name, pc_num, pc_gene_scatter_output_file)
 
 
 pc_gene_scatter_output_file <- paste0(visualize_total_expression_dir, "pc_num_", pc_num, "_",gene_name,"_colored_by_time_scatter.pdf")
-pc_gene_scatter_all_time_colored_by_time(sample_info, quant_expr, ensamble_id, gene_name, pc_num, pc_gene_scatter_output_file)
+#pc_gene_scatter_all_time_colored_by_time(sample_info, quant_expr, ensamble_id, gene_name, pc_num, pc_gene_scatter_output_file)
+
+###########################################################################################
+# Scatter plot of 2nd (and others) PC loading vs a genes AVERAGE expression
+###########################################################################################
+pc_num <- 2
+covariate_file <- paste0(covariate_dir, "processed_covariates_categorical.txt")
+output_file <- paste0(visualize_total_expression_dir,"pc_num_", pc_num,"_avg_10_15_troponin_colored_by_cell_line_scatter.pdf")
+#pc_avg_troponin_scatter_colored_by_cell_line(sample_info, quant_expr, pc_num, covariate_file, output_file)
+pc_num <- 2
+covariate_file <- paste0(covariate_dir, "processed_covariates_categorical.txt")
+output_file <- paste0(visualize_total_expression_dir,"pc_num_", pc_num,"_avg_10_15_troponin_colored_by_time_step_scatter.pdf")
+#pc_avg_troponin_scatter_colored_by_time_step(sample_info, quant_expr, pc_num, covariate_file, output_file)
 
 ####################################################################
 # Covariates explaining variance in principle components
@@ -1143,15 +1213,20 @@ pc_gene_scatter_all_time_colored_by_time(sample_info, quant_expr, ensamble_id, g
 pc_file <- paste0(covariate_dir,"principal_components_10.txt")
 covariate_file <- paste0(covariate_dir, "processed_covariates_categorical.txt")
 output_file <- paste0(visualize_total_expression_dir, "pc_covariate_pve_heatmap.png")
-covariate_pc_pve_heatmap(pc_file, covariate_file,output_file)
+covariate_pc_pve_heatmap(pc_file, covariate_file,output_file, "PCA")
 
 # Make heatmap showing PVE between pcs & (covariates and troponin/sox2 expression)
 pc_file <- paste0(covariate_dir,"principal_components_10.txt")
 covariate_file <- paste0(covariate_dir, "processed_covariates_categorical.txt")
 output_file <- paste0(visualize_total_expression_dir, "pc_covariate_troponin_sox2_pve_heatmap.png")
-covariate_pc_specific_genes_pve_heatmap(pc_file, quant_expr, covariate_file,output_file)
+#covariate_pc_specific_genes_pve_heatmap(pc_file, quant_expr, covariate_file,output_file)
 
 
+# Make heatmap showing PVE between pcs and covariates
+pc_file <- paste0(covariate_dir,"sva_loadings.txt")
+covariate_file <- paste0(covariate_dir, "processed_covariates_categorical.txt")
+output_file <- paste0(visualize_total_expression_dir, "sva_covariate_pve_heatmap.png")
+covariate_pc_pve_heatmap(pc_file, covariate_file,output_file, "SVA")
 
 
 ####################################################################
