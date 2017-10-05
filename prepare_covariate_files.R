@@ -36,7 +36,7 @@ save_pcs <- function(sample_names, quant_expr, n, output_file) {
     save_python_style_matrix(pc, output_file, "Sample_id")
 }
 
-save_sva <- function(sample_info, quant_expr, sva_output_file) {
+save_sva <- function(sample_info, quant_expr, sva_output_file, corrected_expression_sva) {
     # Formatting changes required for SVA
     rownames(sample_info) <- sample_info$Sample_name
     colnames(quant_expr) <- sample_info$Sample_name
@@ -54,11 +54,34 @@ save_sva <- function(sample_info, quant_expr, sva_output_file) {
     # Extract factors. Matrix of dim (Num_samples)X(t.sv)
     sva_factors <- svaobj$sv
 
+
     # Add row and column labels
     rownames(sva_factors) <- sample_info$Sample_name
     colnames(sva_factors) <- paste0("factor",1:svaobj$n.sv)
     
     save_python_style_matrix(sva_factors, sva_output_file, "Sample_id")
+
+
+    # Fit linear model between latent factors and expression
+    expr_lm <- lm(t(quant_expr) ~ svaobj$sv)
+
+    # Get residuals from lm
+    quant_norm_residual <- t(resid(expr_lm))
+
+    save_DGE_matrix(quant_norm_residual, corrected_expression_sva)
+
+}
+
+save_DGE_matrix <- function(counts, output_file) {
+    #  Convert DGE data structure to matrix
+    temp_mat <- as.matrix(counts)
+
+    #  Edit colnames to include a header over the row-labels.
+    revised_column_names <- colnames(temp_mat)
+    revised_column_names[1] <- paste0("Gene_id\t",revised_column_names[1])
+
+    write.table(temp_mat, output_file, quote=FALSE,col.names = revised_column_names)
+
 }
 
 
@@ -379,7 +402,8 @@ save_pcs(sample_info$Sample_name, quant_expr, n, pc_output_file)
 ##############################################################################################################################
 #  Ouptut file to save SVA loadings to 
 sva_output_file <- paste0(covariate_dir, "sva_loadings.txt")
-save_sva(sample_info, quant_expr, sva_output_file)
+corrected_expression_sva <- paste0(preprocess_total_expression_dir, "quant_expr_sva_corrected.txt")
+save_sva(sample_info, quant_expr, sva_output_file, corrected_expression_sva)
 
 
 

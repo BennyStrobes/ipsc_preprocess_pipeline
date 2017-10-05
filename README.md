@@ -29,6 +29,8 @@ As for important output files from this pipeline (using dir_names defined in 'pr
 
 	11. $fastq_input_dir"fastq_mapping.txt" contains list of mapping from sample_ids (cellLine_timeStep) to fastq files composing those samples
 
+	12. $preprocess_total_expression_dir"quant_expr_sva_corrected.txt contains residual quantile normalized expression matrix after regressing out sva latent factors.
+
 
 Let me know if something isn't clear or you think you found a mistake!
 
