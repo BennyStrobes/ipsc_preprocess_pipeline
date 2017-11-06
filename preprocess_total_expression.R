@@ -225,6 +225,41 @@ quantile_normalize_and_standardize <- function(rpkm_data, preprocess_total_expre
     return(quantile_normalized)
 }
 
+
+#  Peform quantile normalization, and then standardize each row 
+#  Do this for each time step independently
+quantile_normalize_and_standardize_time_step_independent <- function(rpkm_data, preprocess_total_expression_dir, sample_info) {
+
+    # Initialize matrix that will contain quantile normalized expression
+    quantile_normalized <- matrix(0, dim(rpkm_data)[1], dim(rpkm_data)[2])
+
+    # Loop through time steps..
+    for (temp_time_step in 0:15) {
+        # Get matrix of samples belonging to only the current time step
+        time_step_indices <- sample_info$time == as.character(temp_time_step)
+        time_step_rpkm_matrix <- as.matrix(rpkm_data[,time_step_indices])
+        # Quantile normalize (so the samples have equivalent variance)
+        time_step_quantile_normalized_samples <- normalize.quantiles(time_step_rpkm_matrix)
+
+        # Project each gene onto a gaussian
+        time_step_temp_mat <- t(apply(time_step_quantile_normalized_samples, 1, rank, ties.method = "average"))
+        time_step_quantile_normalized <- qnorm(time_step_temp_mat / (ncol(time_step_temp_mat)+1));
+
+        # Now add time step independent results back into the full matrix for storage purposes
+        quantile_normalized[,time_step_indices] <- time_step_quantile_normalized
+    }
+
+    colnames(quantile_normalized) <- colnames(rpkm_data)
+    rownames(quantile_normalized) <- rownames(rpkm_data)
+
+    #  Write results to output file
+    output_file <- paste0(preprocess_total_expression_dir,"time_step_independent_quantile_normalized.txt")
+    save_DGE_matrix(quantile_normalized, output_file)
+
+    return(quantile_normalized)
+}
+
+
 preprocess_total_expression_dir = args[1]
 exon_file = args[2]
 bam_dir = args[3]
@@ -235,17 +270,17 @@ exon_table <- read.table(exon_file,header=TRUE)
 
 ##############################################################################################################
 #  Convert from BAMs to count based data (Using edgeR)
-fc <- featureCounts(Sys.glob(paste0(bam_dir,"*bam")),annot.ext=exon_file)
-counts <- DGEList(counts=fc$counts, genes=fc$annotation[,c("GeneID","Length","Chr","Start","End","Strand")])
+#fc <- featureCounts(Sys.glob(paste0(bam_dir,"*bam")),annot.ext=exon_file)
+#counts <- DGEList(counts=fc$counts, genes=fc$annotation[,c("GeneID","Length","Chr","Start","End","Strand")])
 
 #  Add biotype information to count data structure (ie. whether gene is protein_coding or not_protein_coding)
-counts <- add_biotype_to_count_data_structure(counts, exon_table)
-saveRDS(counts, paste0(preprocess_total_expression_dir,"raw_counts.rds"))
-saveRDS(fc, paste0(preprocess_total_expression_dir,"fc.rds"))
+#counts <- add_biotype_to_count_data_structure(counts, exon_table)
+#saveRDS(counts, paste0(preprocess_total_expression_dir,"raw_counts.rds"))
+#saveRDS(fc, paste0(preprocess_total_expression_dir,"fc.rds"))
 ################################################################################################################
 # Use this part if already converted from bams once!
-#fc <- readRDS(paste0(preprocess_total_expression_dir,"fc.rds"))
-#counts <- readRDS(paste0(preprocess_total_expression_dir,"raw_counts.rds"))
+fc <- readRDS(paste0(preprocess_total_expression_dir,"fc.rds"))
+counts <- readRDS(paste0(preprocess_total_expression_dir,"raw_counts.rds"))
 ################################################################################################################
 
 
@@ -267,8 +302,17 @@ temp_data_struct <- filter_genes(counts, rpkm_data, preprocess_total_expression_
 counts <- temp_data_struct[[1]]
 rpkm_data <- temp_data_struct[[2]]
 
+
+#  Peform quantile normalization, and then standardize each row 
+#  Do this for each time step independently
+quantile_normalized_time_step_independent_data <- quantile_normalize_and_standardize_time_step_independent(rpkm_data, preprocess_total_expression_dir, counts$samples)
+
+
 #  Peform quantile normalization, and then standardize each row 
 quantile_normalized_data <- quantile_normalize_and_standardize(rpkm_data, preprocess_total_expression_dir)
+
+
+
 
 #  Save sample information to tab-delimited output file
 save_DGE_matrix2(counts$samples, paste0(preprocess_total_expression_dir, "sample_info.txt"))

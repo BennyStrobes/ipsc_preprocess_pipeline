@@ -72,6 +72,39 @@ save_sva <- function(sample_info, quant_expr, sva_output_file, corrected_express
 
 }
 
+
+save_time_step_independent_pca <- function(sample_info, quant_expr, pca_output_stem) {
+    # Formatting changes required for SVA
+    rownames(sample_info) <- sample_info$Sample_name
+    colnames(quant_expr) <- sample_info$Sample_name
+
+    # The number of PCs to extract
+    n <- 6
+
+    # Perform sva in each time step independently 
+    # Loop through time steps
+    for (temp_time_step in 0:15) {
+
+        # Filter matrices to only include samples at this time step
+        time_step_indices <- sample_info$time == temp_time_step
+        time_step_quant_expr <- quant_expr[,time_step_indices]
+        time_step_sample_info <- sample_info[time_step_indices,]
+
+        # Run SVD on all samples belonging to this time step
+        svd1 <- svd(as.matrix(time_step_quant_expr))
+
+        #  Scores of first n pc's across all samples belonging to this time step
+        pc <- svd1$v[,1:n]
+        colnames(pc) <- paste0("PC",1:n)
+        rownames(pc) <- as.character(sample_info$Sample_name[time_step_indices])
+
+        # Save PCA results to output file
+        time_step_output_file <- paste0(pca_output_stem, temp_time_step, ".txt")
+        save_python_style_matrix(pc, time_step_output_file, "Sample_id")
+    }
+
+}
+
 save_DGE_matrix <- function(counts, output_file) {
     #  Convert DGE data structure to matrix
     temp_mat <- as.matrix(counts)
@@ -375,6 +408,11 @@ sample_info <- read.table(sample_info_file, header=TRUE)
 quantile_normalized_exp_file <- paste0(preprocess_total_expression_dir, "quantile_normalized.txt")
 quant_expr <- read.csv(quantile_normalized_exp_file, header=TRUE, sep=" ")
 
+#  Get quantile normalized expression data (normalization done in eqch time step independently)
+quantile_normalized_time_step_independent_exp_file <- paste0(preprocess_total_expression_dir, "time_step_independent_quantile_normalized.txt")
+quant_expr_time_step_independent <- read.csv(quantile_normalized_time_step_independent_exp_file, header=TRUE, sep=" ")
+
+
 #  Get rpkm expression_data
 rpkm_exp_file <- paste0(preprocess_total_expression_dir, "rpkm.txt")
 rpkm_expr <- read.csv(rpkm_exp_file, header=TRUE, sep=" ")
@@ -400,10 +438,17 @@ save_pcs(sample_info$Sample_name, quant_expr, n, pc_output_file)
 ##############################################################################################################################
 # Write surrogate variables via SVA to output file
 ##############################################################################################################################
-#  Ouptut file to save SVA loadings to 
+#  Ouptut file to save PCA loadings to (for expression data when time steps are treated indpendently)
+pca_output_stem <- paste0(covariate_dir, "pca_loadings_time_step_independent_")
+save_time_step_independent_pca(sample_info, quant_expr_time_step_independent, pca_output_stem)
+
+
+
+#  Ouptut file to save SVA loadings to (for expression data aggregrated across time steps)
 sva_output_file <- paste0(covariate_dir, "sva_loadings.txt")
 corrected_expression_sva <- paste0(preprocess_total_expression_dir, "quant_expr_sva_corrected.txt")
 save_sva(sample_info, quant_expr, sva_output_file, corrected_expression_sva)
+
 
 
 
