@@ -13,7 +13,7 @@ chrom_info_file="$8"
 
 date
 
-
+if false; then
 #########################################################
 # A. Map the fastq files using your favorite mapper/options and filter for quality using a cutoff of your choice (SUBREAD)
 #########################################################
@@ -144,7 +144,7 @@ echo "Running GATK"
 
 
 
-
+fi
 #########################################################
 # H. Convert bam file from this individual into h5 format using bam2h5_tables_update.py (WASP script)
 #########################################################

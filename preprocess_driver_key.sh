@@ -183,12 +183,11 @@ vcf_file=$genotype_dir"YRI_genotype.vcf.gz"
 ######## F. Filter Duplicate Reads using rmdup.py (WASP script)
 ######## G. Run GATK ASE read counter (using output from wasp mapping pipeline)
 ######## H. Convert bam file from this individual into h5 format using bam2h5_tables_update.py (WASP script)
-
 if false; then
 while read standard_id_fastq sequencer_id; do
     standard_id=${standard_id_fastq::${#standard_id_fastq}-9}
 
-    sbatch wasp_mapping_pipeline_part2.sh $standard_id $genotype_dir $fastq_input_dir $wasp_intermediate_dir $genome_dir $vcf_file $raw_allelic_counts_dir
+    sbatch wasp_mapping_pipeline_part2.sh $standard_id $genotype_dir $fastq_input_dir $wasp_intermediate_dir $genome_dir $vcf_file $raw_allelic_counts_dir $chrom_info_file
 done<$sample_names
 fi
 
