@@ -434,14 +434,14 @@ n <- 10
 pc_output_file <- paste0(covariate_dir, "principal_components_", n, ".txt")
 save_pcs(sample_info$Sample_name, quant_expr, n, pc_output_file)
 
-
-##############################################################################################################################
-# Write surrogate variables via SVA to output file
-##############################################################################################################################
 #  Ouptut file to save PCA loadings to (for expression data when time steps are treated indpendently)
 pca_output_stem <- paste0(covariate_dir, "pca_loadings_time_step_independent_")
 save_time_step_independent_pca(sample_info, quant_expr_time_step_independent, pca_output_stem)
 
+
+##############################################################################################################################
+# Write surrogate variables via SVA to output file
+##############################################################################################################################
 
 
 #  Ouptut file to save SVA loadings to (for expression data aggregrated across time steps)

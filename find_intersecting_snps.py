@@ -64,9 +64,9 @@ class DataFiles(object):
         self.haplotype_filename = haplotype_filename
 
         if self.snp_tab_filename:
-            self.snp_tab_h5 = tables.openFile(snp_tab_filename, "r")
-            self.snp_index_h5 = tables.openFile(snp_index_filename, "r")
-            self.hap_h5 = tables.openFile(haplotype_filename, "r")
+            self.snp_tab_h5 = tables.open_file(snp_tab_filename, "r")
+            self.snp_index_h5 = tables.open_file(snp_index_filename, "r")
+            self.hap_h5 = tables.open_file(haplotype_filename, "r")
         else:
             self.snp_tab_h5 = None
             self.snp_index_h5 = None
@@ -596,7 +596,9 @@ def filter_reads(files, max_seqs=MAX_SEQS_DEFAULT, max_snps=MAX_SNPS_DEFAULT,
         
         if (cur_tid is None) or (read.tid != cur_tid):
             # this is a new chromosome
-            cur_chrom = files.input_bam.getrname(read.tid)
+            cur_chrom = 'chr' + files.input_bam.getrname(read.tid)
+
+
 
             if len(read_pair_cache) != 0:
                 sys.stderr.write("WARNING: failed to find pairs for %d "

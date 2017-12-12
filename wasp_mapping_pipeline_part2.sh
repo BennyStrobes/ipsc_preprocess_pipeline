@@ -1,5 +1,5 @@
 #!/bin/bash
-#SBATCH --mem=30G --time=03:30:00 --partition=broadwl
+#SBATCH --mem=30G --time=06:30:00 --partition=broadwl
 
 
 standard_id="$1"
@@ -9,18 +9,20 @@ wasp_intermediate_dir="$4"
 genome_dir="$5"
 vcf_file="$6"
 preprocess_allelic_counts_dir="$7"
+chrom_info_file="$8"
 
 date
 
-##################################################################################################################
-# WASP Mapping Pipeline Step 2: Initial Mapping of fastq files
-#             WASP description: Map the fastq files using your favorite mapper/options and filter for
-#                  quality using a cutoff of your choice
-#             Then sort and index those bams.
-# This part takes around 25 minutes
 
+#########################################################
+# A. Map the fastq files using your favorite mapper/options and filter for quality using a cutoff of your choice (SUBREAD)
+#########################################################
+# This part takes around 25 minutes
 echo "WASP STEP 2: Initial Mapping of fastq file (with subread)"
+
 fq_file=$fastq_dir$standard_id".fastq.gz"
+echo $fq_file
+
 Rscript run-subread.R $fq_file $wasp_intermediate_dir $genome_dir
 
 
@@ -30,24 +32,26 @@ samtools index $wasp_intermediate_dir$standard_id.sort.bam
 
 
 
-
-##################################################################################################################
-# WASP Mapping Pipeline Step 3: Use find_intersecting_snps.py to identify reads that may have mapping biases
-# find_intersecting_snps.py is a WASP script
+#########################################################
+# B. Use find_intersecting_snps.py (WASP script) to identify reads that may have mapping bias
+#########################################################
 # This part takes around 10 minutes
 echo "WASP STEP 3: find_intersecting_snps.py"
 
-# Run script
+
 python find_intersecting_snps.py \
-            --is_sorted \
-            --output_dir $wasp_intermediate_dir \
-            --snp_dir $genotype_dir \
-            $wasp_intermediate_dir$standard_id.sort.bam
+    --is_sorted \
+    --output_dir $wasp_intermediate_dir \
+    --snp_tab $genotype_dir"snp_tab.h5" \
+    --snp_index $genotype_dir"snp_index.h5" \
+    --haplotype $genotype_dir"haps.h5" \
+    --samples $genotype_dir"used_samples.txt" \
+    $wasp_intermediate_dir$standard_id.sort.bam
 
 
-
-##################################################################################################################
-# WASP Mapping Pipeline Step 4: Map the PREFIX.remap.fq.gz using the same mapping arguments used in WASP Mapping Pipeline Step 2.
+#########################################################
+# C. Map the filtered fastq file a second time using the same arguments as the previous mapping
+#########################################################
 # This part takes around 10 minutes
 echo "WASP STEP 4: Second mapping"
 
@@ -61,12 +65,12 @@ samtools index $wasp_intermediate_dir$standard_id.sort.remap.sort.bam
 
 
 
-#################################################################################################################
-# WASP Mapping Pipeline Step 5: Use filter_remapped_reads.py to filter out reads where one or more of the allelic 
-#      versions of the reads fail to map back to the same location as the original read
+#########################################################
+# D. Use filter_remapped_reads.py (WASP script) to filter out reads where one or more of the allelic versions of the reads fail to map back to the same location as the original read
+#########################################################
 #  This part takes around 3 minutes
-
 echo "WASP STEP 5: filter_remapped_reads.py"
+
 python filter_remapped_reads.py \
         $wasp_intermediate_dir$standard_id.sort.to.remap.bam \
         $wasp_intermediate_dir$standard_id.sort.remap.sort.bam \
@@ -74,10 +78,11 @@ python filter_remapped_reads.py \
 
 
 
-#################################################################################################################
-# WASP Mapping Pipeline Step 6: Merge bams that we plan to use. Then sort and index
-echo "WASP STEP 6: Merge bams"
+#########################################################
+# E. Merge the bams we plan to use. Then sort and index
+#########################################################
 #  This part takes around 5 minutes
+echo "WASP STEP 6: Merge bams"
 
 samtools merge $wasp_intermediate_dir$standard_id.keep.merge.bam \
                 $wasp_intermediate_dir$standard_id.keep.bam \
@@ -88,18 +93,19 @@ samtools index $wasp_intermediate_dir$standard_id.keep.merge.sort.bam
 
 
 
-#################################################################################################################
-# WASP Mapping Pipeline Step 7: Filter duplicate reads.
-echo "WASP STEP 7: Filter duplicate reads using rmdup.py"
+#########################################################
+# F. Filter Duplicate Reads using rmdup.py (WASP script)
+#########################################################
 #  This part takes around 5 minutes
-# Use rmdup.py for single end reads and rmdup_pe.py for paired end!
+echo "WASP STEP 7: Filter duplicate reads using rmdup.py"
 python rmdup.py $wasp_intermediate_dir$standard_id.keep.merge.sort.bam $wasp_intermediate_dir$standard_id.wasp_corrected.bam
 
 
 
 
-#################################################################################################################
-# GATK ASEReadCounter (Using WASP Output)
+#########################################################
+# G. Run GATK ASE read counter (using output from wasp mapping pipeline)
+#########################################################
 
 echo "Adding uninformative groupnames to bam file (so GATK accepts the bams)"
 #  This is only done so GATK accepts the bams. The group names mean nothing!
@@ -134,6 +140,34 @@ echo "Running GATK"
    -sites $vcf_file \
    --outputFormat "TABLE"
 
+
+
+
+
+
+#########################################################
+# H. Convert bam file from this individual into h5 format using bam2h5_tables_update.py (WASP script)
+#########################################################
+
+# Extact cell line name (INDIVIDUAL) from $standard_id
+INDIVIDUAL=`sed 's/_/\n/g' <<< $standard_id | head -1`
+
+time_step=`sed 's/_/\n/g' <<< $standard_id | head -2 | tail -1`
+
+ALL_SAMPLES_FILE=$genotype_dir"all_genotyped_samples.txt"
+
+
+python bam2h5_tables_update.py --chrom $chrom_info_file \
+    --snp_index $genotype_dir"snp_index.h5" \
+    --snp_tab $genotype_dir"snp_tab.h5" \
+    --haplotype $genotype_dir"haps.h5" \
+    --samples $ALL_SAMPLES_FILE \
+    --individual $INDIVIDUAL \
+    --ref_as_counts $preprocess_allelic_counts_dir"ref_as_counts."$INDIVIDUAL"_"$time_step".h5" \
+    --alt_as_counts $preprocess_allelic_counts_dir"alt_as_counts."$INDIVIDUAL"_"$time_step".h5" \
+    --other_as_counts $preprocess_allelic_counts_dir"other_as_counts."$INDIVIDUAL"_"$time_step".h5" \
+    --read_counts $preprocess_allelic_counts_dir"read_counts."$INDIVIDUAL"_"$time_step".h5" \
+    $wasp_intermediate_dir$INDIVIDUAL"_"$time_step"_merged.wasp_corrected_gatk_ready.bam"
 
 
 echo "DONE!"

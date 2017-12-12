@@ -1,13 +1,10 @@
 args = commandArgs(trailingOnly=TRUE)
-library(edgeR)
 library(Rsubread)
-library(Biobase)
-library(preprocessCore)
 library(ggplot2)
 library(ggthemes)
 library(reshape)
-library(cowplot)
 library(mvtnorm)
+library(cowplot)
 
 
 # Visualize the percent of het snps that show biallelic expression. Color points by cell line
@@ -148,6 +145,9 @@ fraction_of_hard_coded_genotype_sites <- function(het_prob_file, sample_info, ou
     bar_plot <- bar_plot + theme(text = element_text(size=18), panel.grid.major = element_blank(), panel.grid.minor = element_blank(),panel.background = element_blank(), axis.line = element_line(colour = "black"),axis.text.x = element_text(angle = 90, vjust=.43,hjust = -1)) 
     bar_plot <- bar_plot + labs(colour="Cell Line",x = "Cell Line", y = "% hard-coded sites") + theme(legend.position="none")
 
+    #pdf(output_file)
+    #print(bar_plot)
+    #dev.off()
     ggsave(bar_plot, file=output_file,width = 15,height=10.5,units="cm")
 }
 
@@ -559,29 +559,29 @@ gene_names <- extract_gene_names_from_site_ids(site_ids)
 
 # Compute fraction of imputated genotype sites for each sample
 het_prob_file <- paste0(genotype_dir, "YRI_het_prob_genotype.vcf")
-fraction_hard_coded_output_file <- paste0(visualize_allelic_counts_dir, "percent_hard_coded_genotypes_by_cell_line.png")
-#fraction_of_hard_coded_genotype_sites(het_prob_file, sample_info, fraction_hard_coded_output_file)
+fraction_hard_coded_output_file <- paste0(visualize_allelic_counts_dir, "percent_hard_coded_genotypes_by_cell_line.pdf")
+fraction_of_hard_coded_genotype_sites(het_prob_file, sample_info, fraction_hard_coded_output_file)
 
 
 # Visualize the percent of het snps that show biallelic expression. Color points by cell line
 num_read_threshold <- 5  # Only consider sites that have at least num_read_threshold reads mapping to both alleles
 percent_biallelic_ouptut_file <- paste0(visualize_allelic_counts_dir, "percent_biallelic_het_snps_by_cell_line_",het_thresh, ".png")
-#percent_biallelic_het_snps_scatter_cell_line(ref_counts, total_counts, sample_info, percent_biallelic_ouptut_file, num_read_threshold)
+percent_biallelic_het_snps_scatter_cell_line(ref_counts, total_counts, sample_info, percent_biallelic_ouptut_file, num_read_threshold)
 
 # Visualize the percent of het snps that show biallelic expression. Color points by total read-depth
 num_read_threshold <- 5  # Only consider sites that have at least num_read_threshold reads mapping to both alleles
 percent_biallelic_ouptut_file <- paste0(visualize_allelic_counts_dir, "percent_biallelic_het_snps_by_library_size_",het_thresh, ".png")
-#percent_biallelic_het_snps_scatter_library_size(ref_counts, total_counts, sample_info, percent_biallelic_ouptut_file, num_read_threshold)
+percent_biallelic_het_snps_scatter_library_size(ref_counts, total_counts, sample_info, percent_biallelic_ouptut_file, num_read_threshold)
 
 
 
 # Make boxplot of number of expressed het-snps per individual with one box for every read cutoff (that defines what is an expressed het-snp)
 number_of_expressed_het_snps_output_file <- paste0(visualize_allelic_counts_dir, "number_of_expressed_het_snps_per_individual_boxplot_",het_thresh,".png")
-#number_of_expressed_het_snps_per_individual(total_counts, number_of_expressed_het_snps_output_file, het_thresh)
+number_of_expressed_het_snps_per_individual(total_counts, number_of_expressed_het_snps_output_file, het_thresh)
 
 # Make boxplot of number of expressed het-snps per individual with one box for every read cutoff (that defines what is an expressed het-snp) and also per cell_line
 number_of_expressed_het_snps_output_file <- paste0(visualize_allelic_counts_dir, "number_of_expressed_het_snps_per_individual_cell_line_boxplot_",het_thresh,".png")
-#number_of_expressed_het_snps_per_individual_cell_line_binned(total_counts, number_of_expressed_het_snps_output_file, het_thresh)
+number_of_expressed_het_snps_per_individual_cell_line_binned(total_counts, number_of_expressed_het_snps_output_file, het_thresh)
 
 
 # Experiment with number of heterozygous sites that remain when we use various filters.
@@ -590,7 +590,7 @@ number_of_expressed_het_snps_output_file <- paste0(visualize_allelic_counts_dir,
 ### b. Minimum fraction of remaining samples that have bi-allelic expression (fewer than n reads mapping, or less than 1% of reads mapping to one allele)
 ### c. The n reads in step b
 number_of_heterozygous_sites_after_filters_output_file <- paste0(visualize_allelic_counts_dir, "number_of_heterozygous_sites_at_various_filters_lineplot_min_reads_",het_thresh,".png")
-#number_of_heterozygous_sites_at_various_filters_lineplot(ref_counts, total_counts, sample_info, number_of_heterozygous_sites_after_filters_output_file, het_thresh)
+number_of_heterozygous_sites_at_various_filters_lineplot(ref_counts, total_counts, sample_info, number_of_heterozygous_sites_after_filters_output_file, het_thresh)
 
 # Experiment with number of heterozygous sites (IN TERMS OF UNIQUE GENES) that remain when we use various filters.
 # Specifically wish to vary:
@@ -598,7 +598,7 @@ number_of_heterozygous_sites_after_filters_output_file <- paste0(visualize_allel
 ### b. Minimum fraction of remaining samples that have bi-allelic expression (fewer than n reads mapping, or less than 1% of reads mapping to one allele)
 ### c. The n reads in step b
 number_of_genes_after_filters_output_file <- paste0(visualize_allelic_counts_dir, "number_of_genes_at_various_filters_lineplot_min_reads_",het_thresh,".png")
-#number_of_genes_at_various_filters_lineplot(ref_counts, total_counts, sample_info, number_of_genes_after_filters_output_file, het_thresh, gene_names)
+number_of_genes_at_various_filters_lineplot(ref_counts, total_counts, sample_info, number_of_genes_after_filters_output_file, het_thresh, gene_names)
 
 
 # Experiment with number of heterozygous sites that remain when we use various filters.
@@ -613,4 +613,4 @@ number_of_heterozygous_sites_at_various_filters_independent_time_step_lineplot(r
 
 # Histogram of number of mapped genes per heterozygous site
 number_of_mapped_genes_per_site_output_file <- paste0(visualize_allelic_counts_dir, "number_of_mapped_genes_per_site_", het_thresh, ".png")
-#number_of_mapped_genes_per_site_histogram(gene_names, number_of_mapped_genes_per_site_output_file)
+number_of_mapped_genes_per_site_histogram(gene_names, number_of_mapped_genes_per_site_output_file)

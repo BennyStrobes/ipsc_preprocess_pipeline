@@ -35,10 +35,19 @@ metadata_input_file="/project2/gilad/bstrober/ipsc_differentiation/preprocess_in
 #  Downloaded from "https://www.gencodegenes.org/releases/19.html" on September 13, 2017
 gencode_gene_annotation_file="/project2/gilad/bstrober/ipsc_differentiation/preprocess_input_data/gencode.v19.annotation.gtf.gz"
 
+#  Directory containing files created by Nick/Bryce 
+#  Data initially found on PPS at /data/internal/genotypes/hg19/YRI/
+impute2_genotype_dir="/project2/gilad/bstrober/ipsc_differentiation/preprocess_input_data/impute2_genotypes/"
 
+# Downloaded from http://hgdownload.soe.ucsc.edu/goldenPath/hg19/database/chromInfo.txt.gz on 10/20/17
+# Required by WASP
+chrom_info_file="/project2/gilad/bstrober/ipsc_differentiation/preprocess_input_data/chromInfo.txt"
 
-
-
+# Directory containing some pre-compiled WASP functions
+# Specifically, there are two important functions in this directory:
+### 1. 'fasta2h5'
+### 2. 'snp2h5'
+snp2h5_dir="/home/bstrober/ipsc_differentiation/preprocess/WASP/snp2h5/"
 
 
 
@@ -134,8 +143,9 @@ fi
 #    3. Also does some exploratory visualization analysis of the expression data  (visualize_processed_total_expression.R)
 #  Takes about 4 hours to run
 exon_file=$genome_dir"exons.saf"
+if false; then
 sh preprocess_total_expression.sh $preprocess_total_expression_dir $exon_file $bam_dir $visualize_total_expression_dir $metadata_input_file $covariate_dir $fastqc_dir
-
+fi
 
 
 
@@ -143,45 +153,41 @@ sh preprocess_total_expression.sh $preprocess_total_expression_dir $exon_file $b
 # Preprocess allelic counts
 #############################################################################################################################
 
-
 # Run the following three parts in series:
 #########################################
 
-### Part 1
-#  wasp_maping_pipeline_part1.sh
-#  This includes:
-#       1. WASP Mapping Pipeline Step 1: Create text based SNP files. 
-#             Completed through 'create_text_based_snp_files.py'
-#             WASP description: The text-based input files have three space-delimited columns
-#                  (position, ref_allele, alt_allele), and one input file per chromosome.
-#                  The filenames must contain the name of the chromosome (e.g. chr2).
-#             We use file names 1.snps.txt
-# Takes about an hour to run
 
-# file created in merge_fastq_replicates.sh that contains the name of each of our samples. We are going to use this to filter genotypes
+
+### Part 1: wasp_maping_pipeline_part1.sh. This includes:
+######## A. Create text based SNP-site files (1 for each chromosome). These files only contain genotype sites (not information) and are used for WASP.
+######## B. Make pseudo-VCF into VALID VCF file (does this for both vcf genotype file and heterozygous site file)
+######## C. Get Reference genome in correct format for ASE Mapping
+######## D. Convert impute2 genotype information to H5 format using WASP's snp2h5 script
+######## E. Convert fasta information to h5 format using WASP's fasta2h5 script
 sample_names=$fastq_input_dir"fastq_mapping.txt"
 if false; then
-sbatch wasp_mapping_pipeline_part1.sh $genotype_input $heterozygous_site_input_dir $genotype_dir $genome_dir $sample_names
+sbatch wasp_mapping_pipeline_part1.sh $genotype_input $heterozygous_site_input_dir $genotype_dir $genome_dir $sample_names $impute2_genotype_dir $chrom_info_file $snp2h5_dir
 fi
-
 # Genotype file that is in VCF format.
 # Made by wasp_mapping_piepline_part1.sh
 vcf_file=$genotype_dir"YRI_genotype.vcf.gz"
 
 
 
-### Part 2
+### Part 2: wasp_mapping_pipeline_part2.sh (run in parallel for each sample). This includes (per sample):
+######## A. Map the fastq files using your favorite mapper/options and filter for quality using a cutoff of your choice (SUBREAD)
+######## B. Use find_intersecting_snps.py (WASP script) to identify reads that may have mapping bias
+######## C. Map the filtered fastq file a second time using the same arguments as the previous mapping
+######## D. Use filter_remapped_reads.py (WASP script) to filter out reads where one or more of the allelic versions of the reads fail to map back to the same location as the original read
+######## E. Merge the bams we plan to use. Then sort and index
+######## F. Filter Duplicate Reads using rmdup.py (WASP script)
+######## G. Run GATK ASE read counter (using output from wasp mapping pipeline)
+######## H. Convert bam file from this individual into h5 format using bam2h5_tables_update.py (WASP script)
 
-# wasp_mapping_pipeline_part2.sh (run in parallel for each sample)
-#       2. WASP Mapping Pipeline Step 2: Initial Mapping of fastq files
-#             WASP description: Map the fastq files using your favorite mapper/options and filter for
-#                  quality using a cutoff of your choice
-#             Then sort and index those bams.
-
-#LOOP THROUGH sample_names and get:
 if false; then
 while read standard_id_fastq sequencer_id; do
     standard_id=${standard_id_fastq::${#standard_id_fastq}-9}
+
     sbatch wasp_mapping_pipeline_part2.sh $standard_id $genotype_dir $fastq_input_dir $wasp_intermediate_dir $genome_dir $vcf_file $raw_allelic_counts_dir
 done<$sample_names
 fi
@@ -194,14 +200,26 @@ fi
 ######### 2. Map the sites to protein coding genes and remove sites that don't lie on a protein-coding gene
 ######### 3. For various heterozygous probability thresholds, place NA for (sample,site) pairs that have het. prob less than specified threshold
 ######### 4. Apply various filters for sites based on number of samples that we have mapped read counts to a het. site (etc)
+######### 5. Visualize the number of counts we get at these various filters
 if false; then
-sh process_and_organize_allelic_counts.sh $raw_allelic_counts_dir $processed_allelic_counts_dir $genotype_dir $preprocess_total_expression_dir $gencode_gene_annotation_file $visualize_allelic_counts_dir
+sbatch process_and_organize_allelic_counts.sh $raw_allelic_counts_dir $processed_allelic_counts_dir $genotype_dir $preprocess_total_expression_dir $gencode_gene_annotation_file $visualize_allelic_counts_dir
 fi
 
 
 
 
+
+
+
+
+
+
+
+
+
+#############################################
 ## USED TO DEBUG SAMPLE SWAPPING
+#############################################
 
 # debug_sample_swap_driver.sh checks to make sure that every RNA-seq sample (has the correct label) and is paired correctly with its corresponding genotype
 # We will test this by looping through each rna-seq sample, and for each sample:

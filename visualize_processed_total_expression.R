@@ -266,10 +266,24 @@ plot_pca_categorical_covariate <- function(sample_info, quant_expr, output_file,
 # Make plot showing variance explained of first n pcs
 plot_pca_variance_explained <- function(sample_info, quant_expr, n, output_file) {
     sv <- svd(as.matrix(quant_expr))
-    pdf(output_file)
-    var_expl_plot <- plot(sv$d^2/sum(sv$d^2), xlim = c(0, n), type = "b", pch = n+1, xlab = "principal components", ylab = "variance explained")
-    print(var_expl_plot)
-    dev.off()
+
+
+    variance_explained <- (sv$d^2/sum(sv$d^2))[1:n]
+
+    # Merge global vectors into a data frame
+    df <- data.frame(variance_explained = variance_explained, pc_num = 1:n)
+
+    # PLOT AWAY
+    line_plot <- ggplot(data=df, aes(x=pc_num, y=variance_explained)) +
+                geom_line() +
+                geom_point() +
+                ylim(0,.35) + 
+                theme(text = element_text(size=14), panel.background = element_blank(), axis.text.x = element_text(vjust=.5)) + 
+                scale_x_continuous(breaks=1:n) +
+                labs(x = "PC Number", title = "Aggregated Time Step Variance Explained",y = "Variance Explained")
+
+    # SAVE PLOT
+    ggsave(line_plot, file=output_file,width = 19,height=13.5,units="cm")
 }
 
 
@@ -1002,6 +1016,160 @@ covariate_pc_specific_genes_pve_heatmap <- function(pc_file, quant_expr, covaria
 }
 
 
+# Perform PCA on time-step independent quantile normalized matrix. Plot variance explained of first n PCs:
+plot_pca_time_independent_variance_explained <- function(sample_info, time_step_independent_quant_expr, n, pca_plot_time_step_output_file) {
+    # Initialize global vectors to keep track of relevent quantities
+    time_step_vec <- c()
+    pc_num_vec <- c()
+    variance_explained_vec <- c()
+
+    #  Compute variance explained for each time step independently
+    #  So loop through time steps
+    for (time_step in 0:15) {
+        # Compute indices of samples that belong to this time step
+        time_step_indices <- sample_info$time == time_step
+        # Filter expression matrix to only samples from this time step
+        time_step_expr <- time_step_independent_quant_expr[,time_step_indices]
+
+        # Run PCA (ie svc) on filtered expression matrix
+        sv <- svd(as.matrix(time_step_expr))
+        # Compute variance_explained
+        variance_explained <- (sv$d^2/sum(sv$d^2))[1:n]
+        
+        # Add results to global vectors to keep track
+        variance_explained_vec <- c(variance_explained_vec, variance_explained)
+        time_step_vec <- c(time_step_vec, rep(time_step, length(variance_explained)))
+        pc_num_vec <- c(pc_num_vec, 1:n)
+    }
+
+    # Merge global vectors into a data frame
+    df <- data.frame(variance_explained = variance_explained_vec, time_step = time_step_vec, pc_num = pc_num_vec)
+
+    # PLOT AWAY
+    line_plot <- ggplot(data=df, aes(x=pc_num, y=variance_explained, group=time_step)) +
+                geom_line(aes(colour=time_step)) +
+                geom_point(aes(colour=time_step)) +
+                scale_color_gradient(low="pink",high="blue") + 
+                ylim(0,.35) +
+                theme(text = element_text(size=14), panel.background = element_blank(), axis.text.x = element_text(vjust=.5)) + 
+                scale_x_continuous(breaks=1:n) +
+                labs(colour="Time Step", x = "PC Number", title = "Independent Time Step Variance Explained",y = "Variance Explained")
+
+    # SAVE PLOT
+    ggsave(line_plot, file=pca_plot_time_step_output_file,width = 19,height=13.5,units="cm")
+
+}
+
+pca_correlation_heatmap_time_independent_v_global_helper <- function(time_step, correlation_map,global_pca_loadings,sample_info,n_global,n_independent, time_step_independent_quant_expr) {
+    # Initialize correlation heatmap
+    correlation_map <- matrix(0, n_global, n_independent)
+    rownames(correlation_map) <- paste0(1:n_global)
+    colnames(correlation_map) <- paste0(1:n_independent)
+
+    # Extract indices of samples corresponding to this time step
+    time_step_indices <- sample_info$time == time_step
+    # Extract expression matrix corresponding to this time step
+    time_step_expr <- time_step_independent_quant_expr[,time_step_indices]
+    # Run PCA (ie svc) on filtered expression matrix
+    time_step_sv_independent <- svd(as.matrix(time_step_expr))
+    # Extract loadings from SVA
+    time_step_pca_loadings <- time_step_sv_independent$v[,1:n_independent]
+    # Now loop through global pcs
+    for (global_pc_num in 1:n_global) {
+        # Loop through local pcs
+        for (local_pc_num in 1:n_independent) {
+            row_num <- global_pc_num
+            col_num <- local_pc_num 
+            local_loadings <- time_step_pca_loadings[,local_pc_num]
+            global_loadings <- global_pca_loadings[time_step_indices,global_pc_num]
+            correlation_map[row_num,col_num] <- abs(cor(local_loadings, global_loadings))
+        }
+    }
+
+    melted_mat <- melt(correlation_map)
+    colnames(melted_mat) <- c("global_pc", "local_pc","ABS_CORR")
+
+    #  Use factors to represent covariate and pc name
+    #melted_mat$GLOBAL_PC <- factor(melted_mat$GLOBAL_PC, levels = rownames(correlation_map)[ord])
+    melted_mat$GLOBAL_PC <- factor(melted_mat$global_pc)
+    melted_mat$LOCAL_PC <- factor(melted_mat$local_pc)
+    #levels(melted_mat$PC) <- c(levels(melted_mat$PC)[1],levels(melted_mat$PC)[3:10],levels(melted_mat$PC)[2])
+
+
+
+    #  PLOT!
+    heatmap <- ggplot(data=melted_mat, aes(x=GLOBAL_PC, y=LOCAL_PC)) + geom_tile(aes(fill=ABS_CORR)) + scale_fill_gradient2(midpoint=-.05, guide="colorbar") + labs(title=paste0("time step: ", time_step), x = "Aggregated PCs", y = "Time step PCs", fill = "Abs(correlation)")
+
+    heatmap <- heatmap + theme(text = element_text(size=10), panel.background = element_blank(), axis.text.x = element_text(angle = 0, vjust=.5)) + theme(legend.position = "top")
+    return(heatmap)
+}
+
+pca_correlation_heatmap_time_independent_v_global <- function(sample_info, quant_expr, time_step_independent_quant_expr, n_global, n_independent, pca_correlation_heatmap_output_file) {
+    # Run SVD (PCA) on global (across all time steps) expression matrix
+    svd_global <- svd(as.matrix(quant_expr))
+    #  Extract scores (loadings) from first n_global pcs
+    global_pca_loadings <- svd_global$v[,1:n_global]
+
+
+    time_step <- 0
+    t0 <- pca_correlation_heatmap_time_independent_v_global_helper(time_step, correlation_map,global_pca_loadings,sample_info,n_global,n_independent,time_step_independent_quant_expr )
+
+    #ggsave(t0, file=pca_correlation_heatmap_output_file,width = 19,height=13.5,units="cm")
+    time_step <- 1
+    t1 <- pca_correlation_heatmap_time_independent_v_global_helper(time_step, correlation_map,global_pca_loadings,sample_info,n_global,n_independent,time_step_independent_quant_expr )+ theme(legend.position="none")
+    
+    time_step <- 2
+    t2 <- pca_correlation_heatmap_time_independent_v_global_helper(time_step, correlation_map,global_pca_loadings,sample_info,n_global,n_independent,time_step_independent_quant_expr )+ theme(legend.position="none")
+    
+    time_step <- 3
+    t3 <- pca_correlation_heatmap_time_independent_v_global_helper(time_step, correlation_map,global_pca_loadings,sample_info,n_global,n_independent,time_step_independent_quant_expr )+ theme(legend.position="none")
+    
+    time_step <- 4
+    t4 <- pca_correlation_heatmap_time_independent_v_global_helper(time_step, correlation_map,global_pca_loadings,sample_info,n_global,n_independent,time_step_independent_quant_expr )+ theme(legend.position="none")
+    
+    time_step <- 5
+    t5 <- pca_correlation_heatmap_time_independent_v_global_helper(time_step, correlation_map,global_pca_loadings,sample_info,n_global,n_independent,time_step_independent_quant_expr )+ theme(legend.position="none")
+    
+    time_step <- 6
+    t6 <- pca_correlation_heatmap_time_independent_v_global_helper(time_step, correlation_map,global_pca_loadings,sample_info,n_global,n_independent,time_step_independent_quant_expr )+ theme(legend.position="none")
+    
+    time_step <- 7
+    t7 <- pca_correlation_heatmap_time_independent_v_global_helper(time_step, correlation_map,global_pca_loadings,sample_info,n_global,n_independent,time_step_independent_quant_expr )+ theme(legend.position="none")
+    
+    time_step <- 8
+    t8 <- pca_correlation_heatmap_time_independent_v_global_helper(time_step, correlation_map,global_pca_loadings,sample_info,n_global,n_independent,time_step_independent_quant_expr )+ theme(legend.position="none")
+    
+    time_step <- 9
+    t9 <- pca_correlation_heatmap_time_independent_v_global_helper(time_step, correlation_map,global_pca_loadings,sample_info,n_global,n_independent,time_step_independent_quant_expr )+ theme(legend.position="none")
+    
+    time_step <- 10
+    t10 <- pca_correlation_heatmap_time_independent_v_global_helper(time_step, correlation_map,global_pca_loadings,sample_info,n_global,n_independent,time_step_independent_quant_expr )+ theme(legend.position="none")
+    
+    time_step <- 11
+    t11 <- pca_correlation_heatmap_time_independent_v_global_helper(time_step, correlation_map,global_pca_loadings,sample_info,n_global,n_independent,time_step_independent_quant_expr )+ theme(legend.position="none")
+    
+    time_step <- 12
+    t12 <- pca_correlation_heatmap_time_independent_v_global_helper(time_step, correlation_map,global_pca_loadings,sample_info,n_global,n_independent,time_step_independent_quant_expr )+ theme(legend.position="none")
+    
+    time_step <- 13
+    t13 <- pca_correlation_heatmap_time_independent_v_global_helper(time_step, correlation_map,global_pca_loadings,sample_info,n_global,n_independent,time_step_independent_quant_expr )+ theme(legend.position="none")
+    
+    time_step <- 14
+    t14 <- pca_correlation_heatmap_time_independent_v_global_helper(time_step, correlation_map,global_pca_loadings,sample_info,n_global,n_independent,time_step_independent_quant_expr )+ theme(legend.position="none")
+    
+    time_step <- 15
+    t15 <- pca_correlation_heatmap_time_independent_v_global_helper(time_step, correlation_map,global_pca_loadings,sample_info,n_global,n_independent,time_step_independent_quant_expr )+ theme(legend.position="none")
+
+    legend <- get_legend(t0)
+
+    pdf(pca_correlation_heatmap_output_file)
+    gg <- plot_grid(t0+ theme(legend.position="none"),t1,t2,t3,t4,t5,t6,t7,t8,t9,t10,t11,t12,t13,t14,t15,NULL,legend,nrow=5,ncol=4,label_size=10,rel_heights=c(1,1,1,1,.23))
+    combined_gg <- ggdraw() + draw_plot(gg,0,0,1,1) 
+    print(combined_gg)
+    dev.off()
+
+}
+
 
 
 #####################################################################################################
@@ -1020,6 +1188,10 @@ sample_info <- read.table(sample_info_file, header=TRUE)
 #  Get quantile normalized expression data
 quantile_normalized_exp_file <- paste0(preprocess_total_expression_dir, "quantile_normalized.txt")
 quant_expr <- read.csv(quantile_normalized_exp_file, header=TRUE, sep=" ")
+
+#  Get quantile normalized expression (done seperately for each time point) data
+quantile_normalized_time_independent_expression_file <- paste0(preprocess_total_expression_dir, "time_step_independent_quantile_normalized.txt")
+time_step_independent_quant_expr <- read.csv(quantile_normalized_time_independent_expression_file, header=TRUE, sep=" ")
 
 #  Get rpkm expression_data
 rpkm_exp_file <- paste0(preprocess_total_expression_dir, "rpkm.txt")
@@ -1129,12 +1301,25 @@ pc_num2<-3
 pca_plot_cell_line_output_file <- paste0(visualize_total_expression_dir, "pca_plot_",pc_num1,"_",pc_num2,"_seperate_cell_lines.pdf")
 #plot_pca_seperate_cell_lines(sample_info, quant_expr, pca_plot_cell_line_output_file,pc_num1,pc_num2)
 
-#################
-# Perform PCA. Plot variance explained of the first n PCs:
-n <- 20
-pca_plot_variance_explained_output_file <- paste0(visualize_total_expression_dir, "pca_plot_variance_explained", n, ".pdf")
-#plot_pca_variance_explained(sample_info, quant_expr, n, pca_plot_variance_explained_output_file)
 
+####################################################################
+# Variance explained line plots
+####################################################################
+
+#################
+# Perform PCA on full quantile normalized matrix. Plot variance explained of the first n PCs:
+n <- 20
+pca_plot_variance_explained_output_file <- paste0(visualize_total_expression_dir, "pca_plot_variance_explained", n, ".png")
+plot_pca_variance_explained(sample_info, quant_expr, n, pca_plot_variance_explained_output_file)
+
+n <- 6
+pca_plot_variance_explained_output_file <- paste0(visualize_total_expression_dir, "pca_plot_variance_explained", n, ".png")
+plot_pca_variance_explained(sample_info, quant_expr, n, pca_plot_variance_explained_output_file)
+
+# Perform PCA on time-step independent quantile normalized matrix. Plot variance explained of first n PCs:
+n <- 6
+pca_plot_time_independent_output_file <- paste0(visualize_total_expression_dir, "pca_plot_time_step_independent_variance_explained",n,".png")
+plot_pca_time_independent_variance_explained(sample_info, time_step_independent_quant_expr, n, pca_plot_time_independent_output_file)
 
 
 
@@ -1213,7 +1398,7 @@ output_file <- paste0(visualize_total_expression_dir,"pc_num_", pc_num,"_avg_10_
 pc_file <- paste0(covariate_dir,"principal_components_10.txt")
 covariate_file <- paste0(covariate_dir, "processed_covariates_categorical.txt")
 output_file <- paste0(visualize_total_expression_dir, "pc_covariate_pve_heatmap.png")
-covariate_pc_pve_heatmap(pc_file, covariate_file,output_file, "PCA")
+#covariate_pc_pve_heatmap(pc_file, covariate_file,output_file, "PCA")
 
 # Make heatmap showing PVE between pcs & (covariates and troponin/sox2 expression)
 pc_file <- paste0(covariate_dir,"principal_components_10.txt")
@@ -1226,7 +1411,24 @@ output_file <- paste0(visualize_total_expression_dir, "pc_covariate_troponin_sox
 pc_file <- paste0(covariate_dir,"sva_loadings.txt")
 covariate_file <- paste0(covariate_dir, "processed_covariates_categorical.txt")
 output_file <- paste0(visualize_total_expression_dir, "sva_covariate_pve_heatmap.png")
-covariate_pc_pve_heatmap(pc_file, covariate_file,output_file, "SVA")
+#covariate_pc_pve_heatmap(pc_file, covariate_file,output_file, "SVA")
+
+
+
+
+####################################################################
+# Correlation heatmap between time step independent latent factors and global latent factors
+####################################################################
+
+
+n_independent <- 5
+n_global <- 7
+pca_correlation_heatmap_output_file <- paste0(visualize_total_expression_dir, "pca_correlation_heatmap_time_independent_v_global.pdf")
+#pca_correlation_heatmap_time_independent_v_global(sample_info, quant_expr, time_step_independent_quant_expr, n_global, n_independent, pca_correlation_heatmap_output_file)
+
+
+
+
 
 
 ####################################################################
