@@ -1,18 +1,13 @@
 args = commandArgs(trailingOnly=TRUE)
-library(edgeR)
-library(Rsubread)
-library(Biobase)
-library(preprocessCore)
 library(ggplot2)
 library(ggthemes)
 library(glmnet)
 library(reshape)
-library(rstan)
 library(cowplot)
-library(mvtnorm)
+library(ica)
 
 
-BETABINOMIAL_GLM=stan_model(file="sparse_betabinomial_glm.stan", save_dso=T, auto_write=T)
+#  BETABINOMIAL_GLM=stan_model(file="sparse_betabinomial_glm.stan", save_dso=T, auto_write=T)
 
 #  Plot first two PC's. Color points by time step
 plot_pca_time_step <- function(sample_info, quant_expr, output_file) {
@@ -35,6 +30,165 @@ plot_pca_time_step <- function(sample_info, quant_expr, output_file) {
     ggsave(pca_scatter, file=output_file,width = 15,height=10.5,units="cm")
 
 }
+
+
+#  Plot first two PC's. Color points by time step
+plot_ica_time_step <- function(sample_info, quant_expr, output_file) {
+
+    #  Compute singular value decomposition
+    imod <- icafast(as.matrix(quant_expr),nc=5)
+
+    #  Scores of first 2 pc's across all samples
+    ic1 <- imod$M[,1]
+    ic2 <- imod$M[,2]
+
+    # Put all information into data structure
+    df <- data.frame(ic1 = ic1, ic2 = ic2, time_step = sample_info$time)
+
+    #PLOT!
+    ica_scatter <-  ggplot(df,aes(ic1,ic2)) + geom_point(aes(colour=time_step)) + theme(text = element_text(size=18), panel.grid.major = element_blank(), panel.grid.minor = element_blank(),panel.background = element_blank(), axis.line = element_line(colour = "black")) 
+    ica_scatter <- ica_scatter + scale_color_gradient(low="pink",high="blue")
+
+
+    ggsave(ica_scatter, file=output_file,width = 15,height=10.5,units="cm")
+
+}
+
+make_one_eigenvector_plot <- function(quant_expr, actual_pc_num, sample_info) {
+    #  Compute singular value decomposition
+    svd1 <- svd(as.matrix(quant_expr))
+
+    #  Scores of first 2 pc's across all samples
+    pc <- svd1$v[,(actual_pc_num + 1)] 
+
+
+    df <- data.frame(pc = pc, time_step = sample_info$time)
+
+    pca_scatter <-  ggplot(df,aes(time_step,pc)) + geom_point(aes(colour=time_step)) + theme(text = element_text(size=18), panel.grid.major = element_blank(), panel.grid.minor = element_blank(),panel.background = element_blank(), axis.line = element_line(colour = "black")) 
+    pca_scatter <- pca_scatter + scale_color_gradient(low="pink",high="blue")
+    pca_scatter <- pca_scatter + labs(colour="time step",x = "time step", y = paste0("PC",(actual_pc_num+1)), title = paste0("PC",(actual_pc_num+1)))
+
+    return(pca_scatter)
+}
+
+make_one_eigenvector_plot2 <- function(quant_expr, actual_pc_num, sample_info) {
+    #  Compute singular value decomposition
+    svd1 <- svd(as.matrix(quant_expr))
+
+    #  Scores of first 2 pc's across all samples
+    pc <- svd1$v[,(actual_pc_num + 1)] 
+
+
+    df <- data.frame(pc = pc, time_step = sample_info$time, cell_line = factor(sample_info$cell_line))
+
+    pca_scatter <-  ggplot(df,aes(time_step,pc)) + geom_point(aes(colour=cell_line)) + theme(text = element_text(size=18), panel.grid.major = element_blank(), panel.grid.minor = element_blank(),panel.background = element_blank(), axis.line = element_line(colour = "black")) 
+    pca_scatter <- pca_scatter + labs(colour="cell line",x = "time step", y = paste0("PC",(actual_pc_num+1)), title = paste0("PC",(actual_pc_num+1)))
+
+    return(pca_scatter)
+}
+
+plot_pca_eigenvectors <- function(sample_info, quant_expr, eigenvectors_output_file) {
+    t0 <- make_one_eigenvector_plot(quant_expr, 0, sample_info)
+    t1 <- make_one_eigenvector_plot(quant_expr, 1, sample_info)+ theme(legend.position="none")
+    t2 <- make_one_eigenvector_plot(quant_expr, 2, sample_info)+ theme(legend.position="none")
+    t3 <- make_one_eigenvector_plot(quant_expr, 3, sample_info)+ theme(legend.position="none")
+
+
+    legend <- get_legend(t0)
+    pdf(eigenvectors_output_file)
+    gg <- plot_grid(t0+ theme(legend.position="none"),t1,t2,t3,nrow=2,ncol=2,label_size=10)
+    combined_gg <- ggdraw() + draw_plot(gg,0,0,1,1) 
+    print(combined_gg)
+    dev.off()
+
+
+}
+
+plot_pca_eigenvectors_by_line <- function(sample_info, quant_expr, eigenvectors_output_file) {
+    t0 <- make_one_eigenvector_plot2(quant_expr, 0, sample_info)
+    t1 <- make_one_eigenvector_plot2(quant_expr, 1, sample_info)+ theme(legend.position="none")
+    t2 <- make_one_eigenvector_plot2(quant_expr, 2, sample_info)+ theme(legend.position="none")
+    t3 <- make_one_eigenvector_plot2(quant_expr, 3, sample_info)+ theme(legend.position="none")
+
+
+    legend <- get_legend(t0)
+    pdf(eigenvectors_output_file)
+    gg <- plot_grid(t0+ theme(legend.position="none"),t1,t2,t3,nrow=2,ncol=2,label_size=10)
+    combined_gg <- ggdraw() + draw_plot(gg,0,0,1,1) 
+    print(combined_gg)
+    dev.off()
+
+
+}
+
+make_eigenvector_plot <- function(i, cell_lines, pc, sample_info) {
+    # Get name of ith cell line
+    i_cell_line <- cell_lines[i]
+
+    # Get indices  of all samples that are from ith cell line
+    i_indices <- sample_info$cell_line == i_cell_line
+
+    #  Extract 1st two pcs of all samples that belong to the ith cell lein
+    i_pc <- pc[i_indices]
+
+    # Get time steps of these samples
+    i_time <- sample_info$time[i_indices]
+
+    # Put into compact data frame for plotting
+    df <- data.frame(pc= i_pc, time_step = i_time)
+
+    #PLOT!
+    pca_scatter <-  ggplot(df,aes(time_step,pc)) + geom_point(aes(colour=time_step)) + theme(text = element_text(size=12), axis.text = element_text(size=8), panel.grid.major = element_blank(), panel.grid.minor = element_blank(),panel.background = element_blank(), axis.line = element_line(colour = "black")) 
+    pca_scatter <- pca_scatter + scale_color_gradient(low="pink",high="blue") + ggtitle(i_cell_line) + ylim(min(pc)-.01,max(pc) + .01)
+
+    return(pca_scatter)
+}
+
+plot_pca_eigenvectors_by_line_independent <- function(sample_info, quant_expr, eigenvectors_output_file, actual_pc_num) {
+    #  Compute singular value decomposition
+    svd1 <- svd(as.matrix(quant_expr))
+
+    #  Scores of first 2 pc's across all samples
+    pc <- svd1$v[,(actual_pc_num)] 
+   
+
+    #  Get unique cell lines
+    cell_lines <- sort(unique(sample_info$cell_line))
+    num_cell_lines <- length(cell_lines)
+
+
+    
+    #  Make pc plot for each cell line seperately (not automated yet..
+     
+    p1 <- make_eigenvector_plot(1, cell_lines, pc, sample_info) + labs(x="time step",y=paste0("PC",actual_pc_num)) # cell line 1
+    p2 <- make_eigenvector_plot(2, cell_lines, pc, sample_info) + labs(x="time step",y=paste0("PC",actual_pc_num))+ theme(legend.position="none") # cell line 1
+    p3 <- make_eigenvector_plot(3, cell_lines, pc, sample_info) + labs(x="time step",y=paste0("PC",actual_pc_num))+ theme(legend.position="none") # cell line 1
+    p4 <- make_eigenvector_plot(4, cell_lines, pc, sample_info) + labs(x="time step",y=paste0("PC",actual_pc_num))+ theme(legend.position="none") # cell line 1
+    p5 <- make_eigenvector_plot(5, cell_lines, pc, sample_info) + labs(x="time step",y=paste0("PC",actual_pc_num))+ theme(legend.position="none") # cell line 1
+    p6 <- make_eigenvector_plot(6, cell_lines, pc, sample_info) + labs(x="time step",y=paste0("PC",actual_pc_num))+ theme(legend.position="none") # cell line 1
+    p7 <- make_eigenvector_plot(7, cell_lines, pc, sample_info) + labs(x="time step",y=paste0("PC",actual_pc_num))+ theme(legend.position="none") # cell line 1
+    p8 <- make_eigenvector_plot(8, cell_lines, pc, sample_info) + labs(x="time step",y=paste0("PC",actual_pc_num))+ theme(legend.position="none") # cell line 1
+    p9 <- make_eigenvector_plot(9, cell_lines, pc, sample_info) + labs(x="time step",y=paste0("PC",actual_pc_num))+ theme(legend.position="none") # cell line 1
+    p10 <- make_eigenvector_plot(10, cell_lines, pc, sample_info) + labs(x="time step",y=paste0("PC",actual_pc_num))+ theme(legend.position="none") # cell line 1
+    p11 <- make_eigenvector_plot(11, cell_lines, pc, sample_info) + labs(x="time step",y=paste0("PC",actual_pc_num))+ theme(legend.position="none") # cell line 1
+    p12 <- make_eigenvector_plot(12, cell_lines, pc, sample_info) + labs(x="time step",y=paste0("PC",actual_pc_num))+ theme(legend.position="none") # cell line 1
+    p13 <- make_eigenvector_plot(13, cell_lines, pc, sample_info) + labs(x="time step",y=paste0("PC",actual_pc_num))+ theme(legend.position="none") # cell line 1
+    p14 <- make_eigenvector_plot(14, cell_lines, pc, sample_info) + labs(x="time step",y=paste0("PC",actual_pc_num))+ theme(legend.position="none") # cell line 1
+
+
+
+    legend <- get_legend(p1)
+
+    # Merge all cell lines into one plot
+    pdf(eigenvectors_output_file)
+    gg <- plot_grid(p1 + theme(legend.position="none"),p2,p3,p4,p5,p6,p7,p8,p9,p10,p11,p12,p13,p14,nrow=4,ncol=4)
+    combined_gg <- ggdraw() + draw_plot(gg,0,0,1,1) + draw_plot(legend,.83,0,1,.3)
+    print(combined_gg)
+    dev.off()
+
+}
+
+
 
 
 plot_library_size <- function(sample_info, library_size_output_file) {
@@ -85,6 +239,31 @@ plot_pca_real_valued_gene_filled <- function(sample_info, quant_expr, ensamble_i
     #  Scores of first 2 pc's across all samples
     pc1 <- svd1$v[,pc_num1]
     pc2 <- svd1$v[,pc_num2]
+
+    row_label <- which(rownames(quant_expr) == ensamble_id)
+    quant_expr <- as.matrix(quant_expr)
+
+    # Put all information into data structure
+    df <- data.frame(pc1 = pc1, pc2 = pc2, time_step = as.vector(quant_expr[row_label,]))
+
+
+    #PLOT!
+    pca_scatter <-  ggplot(df,aes(pc1,pc2)) + geom_point(aes(colour=time_step)) + theme(text = element_text(size=18), panel.grid.major = element_blank(), panel.grid.minor = element_blank(),panel.background = element_blank(), axis.line = element_line(colour = "black")) 
+    pca_scatter <- pca_scatter + scale_color_gradient(low="pink",high="blue") + labs(colour="Expression",x = paste0("PC",pc_num1), title = gene_name,y = paste0("PC",pc_num2))
+
+
+    ggsave(pca_scatter, file=output_file,width = 15,height=10.5,units="cm")
+}
+
+
+plot_ica_real_valued_gene_filled <- function(sample_info, quant_expr, ensamble_id, gene_name, pc_num1, pc_num2, output_file) {
+
+    #  Compute singular value decomposition
+    imod <- icafast(as.matrix(quant_expr),nc=5)
+
+    #  Scores of first 2 pc's across all samples
+    pc1 <- imod$M[,pc_num1]
+    pc2 <- imod$M[,pc_num2]
 
     row_label <- which(rownames(quant_expr) == ensamble_id)
     quant_expr <- as.matrix(quant_expr)
@@ -263,6 +442,27 @@ plot_pca_categorical_covariate <- function(sample_info, quant_expr, output_file,
 
 }
 
+#  Plot first two PC's. Color points by cell_line
+plot_ica_categorical_covariate <- function(sample_info, quant_expr, output_file, covariate, covariate_name,pc_num1,pc_num2) {
+
+    imod <- icafast(as.matrix(quant_expr),nc=5)
+
+    #  Scores of first 2 pc's across all samples
+    pc1 <- imod$M[,pc_num1]
+    pc2 <- imod$M[,pc_num2]
+
+    # Put all information into data structure
+    df <- data.frame(pc1 = pc1, pc2 = pc2, covariate = covariate)
+
+    #PLOT!
+    pca_scatter <- ggplot(df, aes(x = pc1, y = pc2, colour = covariate)) + geom_point() 
+    pca_scatter <- pca_scatter + theme(text = element_text(size=18), panel.grid.major = element_blank(), panel.grid.minor = element_blank(),panel.background = element_blank(), axis.line = element_line(colour = "black")) 
+    pca_scatter <- pca_scatter + labs(colour=covariate_name,x = paste0("IC",pc_num1), y = paste0("IC",pc_num2))
+    ggsave(pca_scatter, file=output_file,width = 15,height=10.5,units="cm")
+
+}
+
+
 # Make plot showing variance explained of first n pcs
 plot_pca_variance_explained <- function(sample_info, quant_expr, n, output_file) {
     sv <- svd(as.matrix(quant_expr))
@@ -345,13 +545,17 @@ plot_pca_seperate_cell_lines <- function(sample_info, quant_expr, output_file,pc
     p8 <- make_pca_plot(8, cell_lines, pc1, pc2, sample_info)+ labs(x=paste0("PC",pc_num1),y=paste0("PC",pc_num2)) +theme(legend.position="none")
     p9 <- make_pca_plot(9, cell_lines, pc1, pc2, sample_info)+ labs(x=paste0("PC",pc_num1),y=paste0("PC",pc_num2)) +theme(legend.position="none")
     p10 <- make_pca_plot(10, cell_lines, pc1, pc2, sample_info)+ labs(x=paste0("PC",pc_num1),y=paste0("PC",pc_num2)) +theme(legend.position="none")
- 
+    p11 <- make_pca_plot(11, cell_lines, pc1, pc2, sample_info)+ labs(x=paste0("PC",pc_num1),y=paste0("PC",pc_num2)) +theme(legend.position="none")
+    p12 <- make_pca_plot(12, cell_lines, pc1, pc2, sample_info)+ labs(x=paste0("PC",pc_num1),y=paste0("PC",pc_num2)) +theme(legend.position="none")
+    p13 <- make_pca_plot(13, cell_lines, pc1, pc2, sample_info)+ labs(x=paste0("PC",pc_num1),y=paste0("PC",pc_num2)) +theme(legend.position="none")
+    p14 <- make_pca_plot(14, cell_lines, pc1, pc2, sample_info)+ labs(x=paste0("PC",pc_num1),y=paste0("PC",pc_num2)) +theme(legend.position="none")
+
 
     legend <- get_legend(p1)
 
     # Merge all cell lines into one plot
     pdf(output_file)
-    gg <- plot_grid(p1 + theme(legend.position="none"),p2,p3,p4,p5,p6,p7,p8,p9,p10,nrow=4,ncol=3)
+    gg <- plot_grid(p1 + theme(legend.position="none"),p2,p3,p4,p5,p6,p7,p8,p9,p10,p11,p12,p13,p14,nrow=4,ncol=4)
     combined_gg <- ggdraw() + draw_plot(gg,0,0,1,1) + draw_plot(legend,.83,0,1,.3)
     print(combined_gg)
     dev.off()
@@ -1181,12 +1385,14 @@ preprocess_total_expression_dir = args[1]  # Where total expression processed da
 visualize_total_expression_dir = args[2]  # Ouputdir to save images
 covariate_dir = args[3]  # Input dir with covariate information
 
+print(visualize_total_expression_dir)
 #  Get sample information 
 sample_info_file <- paste0(preprocess_total_expression_dir, "sample_info.txt")
 sample_info <- read.table(sample_info_file, header=TRUE)
 
 #  Get quantile normalized expression data
 quantile_normalized_exp_file <- paste0(preprocess_total_expression_dir, "quantile_normalized.txt")
+print(quantile_normalized_exp_file)
 quant_expr <- read.csv(quantile_normalized_exp_file, header=TRUE, sep=" ")
 
 #  Get quantile normalized expression (done seperately for each time point) data
@@ -1199,7 +1405,7 @@ rpkm_expr <- read.csv(rpkm_exp_file, header=TRUE, sep=" ")
 
 #  Get covariate file
 covariate_file <- paste0(covariate_dir, "processed_covariates_categorical.txt")
-covariates <- read.table(covariate_file,header=TRUE)
+# covariates <- read.table(covariate_file,header=TRUE)
 
 
 
@@ -1213,10 +1419,12 @@ covariates <- read.table(covariate_file,header=TRUE)
 # Plot library size
 ####################################################################
 
+
+
 ################
 # Make barplot showing library sizes of each sample
 library_size_output_file <- paste0(visualize_total_expression_dir, "library_size.pdf")
-#plot_library_size(sample_info, library_size_output_file)
+plot_library_size(sample_info, library_size_output_file)
 
 
 
@@ -1227,7 +1435,8 @@ library_size_output_file <- paste0(visualize_total_expression_dir, "library_size
 ##################
 #  Perform PCA. Plot first 2 pcs as a function of time step 
 pca_plot_time_step_output_file <- paste0(visualize_total_expression_dir, "pca_plot_1_2_time_step.pdf")
-#plot_pca_time_step(sample_info, quant_expr, pca_plot_time_step_output_file)
+plot_pca_time_step(sample_info, quant_expr, pca_plot_time_step_output_file)
+
 
 
 
@@ -1240,28 +1449,31 @@ pc_num2 <- 2
 ensamble_id <- "ENSG00000118194"
 gene_name <- "Troponin"
 pca_plot_gene_filled_output_file <- paste0(visualize_total_expression_dir, "pca_plot_",pc_num1,"_",pc_num2,"_",gene_name,"_gene_filled.pdf")
-#plot_pca_real_valued_gene_filled(sample_info, quant_expr, ensamble_id,gene_name,pc_num1,pc_num2,pca_plot_gene_filled_output_file)
+plot_pca_real_valued_gene_filled(sample_info, quant_expr, ensamble_id,gene_name,pc_num1,pc_num2,pca_plot_gene_filled_output_file)
+
+
+
 
 pc_num1 <- 2
 pc_num2 <- 3
 ensamble_id <- "ENSG00000118194"
 gene_name <- "Troponin"
 pca_plot_gene_filled_output_file <- paste0(visualize_total_expression_dir, "pca_plot_",pc_num1,"_",pc_num2,"_",gene_name,"_gene_filled.pdf")
-#plot_pca_real_valued_gene_filled(sample_info, quant_expr, ensamble_id,gene_name,pc_num1,pc_num2,pca_plot_gene_filled_output_file)
+plot_pca_real_valued_gene_filled(sample_info, quant_expr, ensamble_id,gene_name,pc_num1,pc_num2,pca_plot_gene_filled_output_file)
 
 pc_num1 <- 1
 pc_num2 <- 2
 ensamble_id <- "ENSG00000181449"
 gene_name <- "sox2"
 pca_plot_gene_filled_output_file <- paste0(visualize_total_expression_dir, "pca_plot_",pc_num1,"_",pc_num2,"_",gene_name,"_gene_filled.pdf")
-#plot_pca_real_valued_gene_filled(sample_info, quant_expr, ensamble_id,gene_name,pc_num1,pc_num2,pca_plot_gene_filled_output_file)
+plot_pca_real_valued_gene_filled(sample_info, quant_expr, ensamble_id,gene_name,pc_num1,pc_num2,pca_plot_gene_filled_output_file)
 
 pc_num1 <- 2
 pc_num2 <- 3
 ensamble_id <- "ENSG00000181449"
 gene_name <- "sox2"
 pca_plot_gene_filled_output_file <- paste0(visualize_total_expression_dir, "pca_plot_",pc_num1,"_",pc_num2,"_",gene_name,"_gene_filled.pdf")
-#plot_pca_real_valued_gene_filled(sample_info, quant_expr, ensamble_id,gene_name,pc_num1,pc_num2,pca_plot_gene_filled_output_file)
+plot_pca_real_valued_gene_filled(sample_info, quant_expr, ensamble_id,gene_name,pc_num1,pc_num2,pca_plot_gene_filled_output_file)
 
 
 
@@ -1276,7 +1488,7 @@ pc_num1 <- 1
 pc_num2 <- 2
 
 pca_plot_cell_line_output_file <- paste0(visualize_total_expression_dir, "pca_plot_",pc_num1,"_",pc_num2,"_cell_line.pdf")
-#plot_pca_categorical_covariate(sample_info, quant_expr, pca_plot_cell_line_output_file,factor(sample_info$cell_line), "cell_line", pc_num1,pc_num2)
+plot_pca_categorical_covariate(sample_info, quant_expr, pca_plot_cell_line_output_file,factor(sample_info$cell_line), "cell_line", pc_num1,pc_num2)
 
 pca_plot_cell_line_output_file <- paste0(visualize_total_expression_dir, "pca_plot_",pc_num1,"_",pc_num2,"_rna_extraction_persion.pdf")
 #plot_pca_categorical_covariate(sample_info, quant_expr, pca_plot_cell_line_output_file,factor(covariates$RNA_extraction_person), "rna_extraction_person", pc_num1,pc_num2)
@@ -1294,12 +1506,41 @@ pca_plot_cell_line_output_file <- paste0(visualize_total_expression_dir, "pca_pl
 pc_num1<-1
 pc_num2<-2
 pca_plot_cell_line_output_file <- paste0(visualize_total_expression_dir, "pca_plot_",pc_num1,"_",pc_num2,"_seperate_cell_lines.pdf")
-#plot_pca_seperate_cell_lines(sample_info, quant_expr, pca_plot_cell_line_output_file,pc_num1,pc_num2)
+plot_pca_seperate_cell_lines(sample_info, quant_expr, pca_plot_cell_line_output_file,pc_num1,pc_num2)
 
 pc_num1<-2
 pc_num2<-3
 pca_plot_cell_line_output_file <- paste0(visualize_total_expression_dir, "pca_plot_",pc_num1,"_",pc_num2,"_seperate_cell_lines.pdf")
-#plot_pca_seperate_cell_lines(sample_info, quant_expr, pca_plot_cell_line_output_file,pc_num1,pc_num2)
+plot_pca_seperate_cell_lines(sample_info, quant_expr, pca_plot_cell_line_output_file,pc_num1,pc_num2)
+
+
+###############################
+# Plot eigenvectors
+################################
+eigenvectors_output_file <- paste0(visualize_total_expression_dir, "pca_plot_eigenvector_viz.pdf")
+plot_pca_eigenvectors(sample_info, quant_expr, eigenvectors_output_file)
+
+eigenvectors_output_file <- paste0(visualize_total_expression_dir, "pca_plot_eigenvector_viz_by_line.pdf")
+plot_pca_eigenvectors_by_line(sample_info, quant_expr, eigenvectors_output_file)
+
+pc_num <-1
+eigenvectors_output_file <- paste0(visualize_total_expression_dir, "pca_plot_", pc_num, "_eigenvector_viz_by_line_independent.pdf")
+plot_pca_eigenvectors_by_line_independent(sample_info, quant_expr, eigenvectors_output_file, pc_num)
+
+
+pc_num <-2
+eigenvectors_output_file <- paste0(visualize_total_expression_dir, "pca_plot_", pc_num, "_eigenvector_viz_by_line_independent.pdf")
+plot_pca_eigenvectors_by_line_independent(sample_info, quant_expr, eigenvectors_output_file, pc_num)
+
+
+pc_num <-3
+eigenvectors_output_file <- paste0(visualize_total_expression_dir, "pca_plot_", pc_num, "_eigenvector_viz_by_line_independent.pdf")
+plot_pca_eigenvectors_by_line_independent(sample_info, quant_expr, eigenvectors_output_file, pc_num)
+
+
+pc_num <-4
+eigenvectors_output_file <- paste0(visualize_total_expression_dir, "pca_plot_", pc_num, "_eigenvector_viz_by_line_independent.pdf")
+plot_pca_eigenvectors_by_line_independent(sample_info, quant_expr, eigenvectors_output_file, pc_num)
 
 
 ####################################################################
@@ -1330,12 +1571,12 @@ plot_pca_time_independent_variance_explained(sample_info, time_step_independent_
 ensamble_id <- "ENSG00000118194"
 gene_name <- "Troponin"
 line_plot_file <- paste0(visualize_total_expression_dir, gene_name,"_time_course_grouped_by_cell_line.pdf")
-#gene_time_course_line_plot_grouped_by_cell_line(sample_info, quant_expr, ensamble_id, gene_name, line_plot_file)
+gene_time_course_line_plot_grouped_by_cell_line(sample_info, quant_expr, ensamble_id, gene_name, line_plot_file)
 
 ensamble_id <- "ENSG00000181449"
 gene_name <- "sox2"
 line_plot_file <- paste0(visualize_total_expression_dir, gene_name,"_time_course_grouped_by_cell_line.pdf")
-#gene_time_course_line_plot_grouped_by_cell_line(sample_info, quant_expr, ensamble_id, gene_name, line_plot_file)
+gene_time_course_line_plot_grouped_by_cell_line(sample_info, quant_expr, ensamble_id, gene_name, line_plot_file)
 
 
 

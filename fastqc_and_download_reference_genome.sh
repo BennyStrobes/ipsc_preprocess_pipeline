@@ -1,17 +1,19 @@
 #!/bin/bash
-#SBATCH --time=12:00:00 --mem=12G
+#SBATCH --time=12:00:00 --mem=12G --partition=broadwl
 fastq_input_dir="$1"
 fastqc_dir="$2"
 genome_dir="$3"
 
-date
+if false; then
+
 # Script provided by John Blischak (https://github.com/jdblischak/midway-subread-pipeline)
 Rscript download-genome.R $genome_dir
-
+date
 
 # Script provided by John Blischak (https://github.com/jdblischak/midway-subread-pipeline)
 Rscript download-exons.R $genome_dir
 date
+fi
 
 # Requires fastqc,
 fastqc $fastq_input_dir*fastq.gz -o $fastqc_dir

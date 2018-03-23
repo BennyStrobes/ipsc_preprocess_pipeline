@@ -1,7 +1,5 @@
 #!/bin/bash
-#SBATCH --mem=30G --time=06:30:00 --partition=broadwl
-
-
+#SBATCH --mem=30G --time=08:30:00 --partition=broadwl
 standard_id="$1"
 genotype_dir="$2"
 fastq_dir="$3"
@@ -11,9 +9,9 @@ vcf_file="$6"
 preprocess_allelic_counts_dir="$7"
 chrom_info_file="$8"
 
+
 date
 
-if false; then
 #########################################################
 # A. Map the fastq files using your favorite mapper/options and filter for quality using a cutoff of your choice (SUBREAD)
 #########################################################
@@ -27,7 +25,7 @@ Rscript run-subread.R $fq_file $wasp_intermediate_dir $genome_dir
 
 
 #  Sort and index the bams
-samtools sort -f $wasp_intermediate_dir$standard_id.bam $wasp_intermediate_dir$standard_id.sort.bam
+samtools sort -o $wasp_intermediate_dir$standard_id.sort.bam $wasp_intermediate_dir$standard_id.bam
 samtools index $wasp_intermediate_dir$standard_id.sort.bam
 
 
@@ -60,7 +58,7 @@ fq_file=$wasp_intermediate_dir$standard_id".sort.remap.fastq.gz"
 Rscript run-subread.R $fq_file $wasp_intermediate_dir $genome_dir
 
 #  Sort and index the bams
-samtools sort -f $wasp_intermediate_dir$standard_id.sort.remap.bam $wasp_intermediate_dir$standard_id.sort.remap.sort.bam
+samtools sort -o $wasp_intermediate_dir$standard_id.sort.remap.sort.bam $wasp_intermediate_dir$standard_id.sort.remap.bam
 samtools index $wasp_intermediate_dir$standard_id.sort.remap.sort.bam
 
 
@@ -88,7 +86,7 @@ samtools merge $wasp_intermediate_dir$standard_id.keep.merge.bam \
                 $wasp_intermediate_dir$standard_id.keep.bam \
                 $wasp_intermediate_dir$standard_id.sort.keep.bam
 
-samtools sort -f $wasp_intermediate_dir$standard_id.keep.merge.bam $wasp_intermediate_dir$standard_id.keep.merge.sort.bam
+samtools sort -o $wasp_intermediate_dir$standard_id.keep.merge.sort.bam $wasp_intermediate_dir$standard_id.keep.merge.bam
 samtools index $wasp_intermediate_dir$standard_id.keep.merge.sort.bam
 
 
@@ -119,7 +117,7 @@ java -jar picard.jar AddOrReplaceReadGroups \
       RGSM=20
 
 echo "Sorting one more time before running GATK"
-samtools sort -f $wasp_intermediate_dir$standard_id.wasp_corrected2.bam $wasp_intermediate_dir$standard_id.wasp_corrected3.bam
+samtools sort -o $wasp_intermediate_dir$standard_id.wasp_corrected3.bam $wasp_intermediate_dir$standard_id.wasp_corrected2.bam
 samtools index $wasp_intermediate_dir$standard_id.wasp_corrected3.bam
 
 
@@ -144,7 +142,7 @@ echo "Running GATK"
 
 
 
-fi
+
 #########################################################
 # H. Convert bam file from this individual into h5 format using bam2h5_tables_update.py (WASP script)
 #########################################################

@@ -1,5 +1,5 @@
 #!/bin/bash
-#SBATCH --time=15:30:00 --mem=20G
+#SBATCH --time=15:30:00 --mem=20G --partition=broadwl
 
 
 processed_allelic_counts_dir="$1"

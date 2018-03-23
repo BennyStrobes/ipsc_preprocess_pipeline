@@ -1,5 +1,5 @@
 #!/bin/bash
-#SBATCH --time=20:00:00 --mem=12G
+#SBATCH --time=20:00:00 --mem=12G --partition=broadwl
 
 preprocess_total_expression_dir="$1"
 exon_file="$2"
@@ -9,12 +9,13 @@ metadata_input_file="$5"
 covariate_dir="$6"
 fastqc_dir="$7"
 
-if false; then
 Rscript preprocess_total_expression.R $preprocess_total_expression_dir $exon_file $bam_dir
-fi
 
-if false; then
+date
 Rscript prepare_covariate_files.R $preprocess_total_expression_dir $metadata_input_file $covariate_dir $fastqc_dir
-fi
 
+
+date
 Rscript visualize_processed_total_expression.R $preprocess_total_expression_dir $visualize_total_expression_dir $covariate_dir
+
+date

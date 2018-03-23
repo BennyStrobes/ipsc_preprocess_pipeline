@@ -419,10 +419,10 @@ rpkm_expr <- read.csv(rpkm_exp_file, header=TRUE, sep=" ")
 
 # Get multiqc general stats output file
 multiqc_file <- paste0(fastqc_dir, "multiqc_data/multiqc_general_stats.txt")
-multiqc <- read.table(multiqc_file,header=TRUE)
+# multiqc <- read.table(multiqc_file,header=TRUE)
 
 #  Get raw covariates
-raw_covariates <- read.csv(metadata_input_file)
+# raw_covariates <- read.csv(metadata_input_file)
 
 
 ##############################################################################################################################
@@ -460,5 +460,5 @@ save_sva(sample_info, quant_expr, sva_output_file, corrected_expression_sva)
 
 
 cov_output_file <- paste0(covariate_dir, "processed_covariates_categorical.txt")
-process_and_save_covariates_categorical(sample_info, raw_covariates, multiqc, cov_output_file, quant_expr)
+# process_and_save_covariates_categorical(sample_info, raw_covariates, multiqc, cov_output_file, quant_expr)
 

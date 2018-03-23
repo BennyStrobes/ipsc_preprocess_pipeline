@@ -8,14 +8,21 @@
 #################################################################################################################################################################
 
 #  Directory containing fastq files from sequencing round 1
-fastq_round_1_input_dir="/project2/gilad/reem/heart/fastq/"
+fastq_round_1_input_dir="/project2/gilad/reem/heartproject/heart/fastq/"
 #  Directory containing fastq files from sequencing round 2
-fastq_round_2_input_dir="/project2/gilad/reem/heart2/fastq/"
+fastq_round_2_input_dir="/project2/gilad/reem/heartproject/heart2/fastq/"
+#  Directory containing fastq files from sequencing of 4 additional samples (round 3)
+fastq_round_3_input_dir="/project2/gilad/reem/heartproject/heart_4newlines/fastq/"
+#  Directory containing fastq files from resequencing of 4 additional samples (round 4)
+fastq_round_4_input_dir="/project2/gilad/reem/heartproject/heart_4newlines_reseq/fastq/"
 
 # File used to map sequencing core names to (cell line, time step) names for the first round of sequencing. Produced by Katie and Reem
 lane_design_round_1_file="/project2/gilad/bstrober/ipsc_differentiation/preprocess_input_data/LaneDesign2forR.csv"  
-# File used to map sequencing core names to (cell line, time step) names for the secomd round of sequencing. Produced by Katie and Reem
-lane_design_round_2_file="/project2/gilad/bstrober/ipsc_differentiation/preprocess_input_data/LaneDesignResequencing2forR.csv"  
+# File used to map sequencing core names to (cell line, time step) names for the second round of sequencing. Produced by Katie and Reem
+lane_design_round_2_file="/project2/gilad/bstrober/ipsc_differentiation/preprocess_input_data/LaneDesignResequencing2forR.csv"
+# File used to map sequencing core names to (cell line, time step) names for the third round of sequencing. Produced by Katie and Reem
+# This is also used as reference for fastq_round_4
+lane_design_round_3_file="/project2/gilad/bstrober/ipsc_differentiation/preprocess_input_data/LaneDesign_NewSamples.csv"
 
 #  Genotype file created by Bryce Van de Geijn. It's format is vcf-ish.
 #  Downloaded from "http://eqtl.uchicago.edu/jointLCL/" under the link "genotypes of 120 YRI individuals" on September 13, 2017
@@ -48,6 +55,9 @@ chrom_info_file="/project2/gilad/bstrober/ipsc_differentiation/preprocess_input_
 ### 1. 'fasta2h5'
 ### 2. 'snp2h5'
 snp2h5_dir="/home/bstrober/ipsc_differentiation/preprocess/WASP/snp2h5/"
+
+# Directory where tabix is installed
+tabix_directory="/home/bstrober/software/tabix-0.2.6/"
 
 
 
@@ -114,7 +124,7 @@ sample_swap_check_dir="/project2/gilad/bstrober/ipsc_differentiation/preprocess/
 # Note: This code really isn't the best b/c it very manually parses the fastq files based on the lane_design files. So caution should be taken in applying merge_fastq_replicates to new situations.
 # Takes about 20 minutes to run
 if false; then
-sh merge_fastq_replicates.sh $fastq_round_1_input_dir $fastq_round_2_input_dir $lane_design_round_1_file $lane_design_round_2_file $fastq_input_dir
+sh merge_fastq_replicates.sh $fastq_round_1_input_dir $fastq_round_2_input_dir $fastq_round_3_input_dir $fastq_round_4_input_dir $lane_design_round_1_file $lane_design_round_2_file $lane_design_round_3_file $fastq_input_dir
 fi
 
 ##Part 2
@@ -147,8 +157,6 @@ if false; then
 sh preprocess_total_expression.sh $preprocess_total_expression_dir $exon_file $bam_dir $visualize_total_expression_dir $metadata_input_file $covariate_dir $fastqc_dir
 fi
 
-
-
 #############################################################################################################################
 # Preprocess allelic counts
 #############################################################################################################################
@@ -166,8 +174,9 @@ fi
 ######## E. Convert fasta information to h5 format using WASP's fasta2h5 script
 sample_names=$fastq_input_dir"fastq_mapping.txt"
 if false; then
-sbatch wasp_mapping_pipeline_part1.sh $genotype_input $heterozygous_site_input_dir $genotype_dir $genome_dir $sample_names $impute2_genotype_dir $chrom_info_file $snp2h5_dir
+sbatch wasp_mapping_pipeline_part1.sh $genotype_input $heterozygous_site_input_dir $genotype_dir $genome_dir $sample_names $impute2_genotype_dir $chrom_info_file $snp2h5_dir $tabix_directory
 fi
+
 # Genotype file that is in VCF format.
 # Made by wasp_mapping_piepline_part1.sh
 vcf_file=$genotype_dir"YRI_genotype.vcf.gz"
@@ -186,10 +195,12 @@ vcf_file=$genotype_dir"YRI_genotype.vcf.gz"
 if false; then
 while read standard_id_fastq sequencer_id; do
     standard_id=${standard_id_fastq::${#standard_id_fastq}-9}
-
-    sbatch wasp_mapping_pipeline_part2.sh $standard_id $genotype_dir $fastq_input_dir $wasp_intermediate_dir $genome_dir $vcf_file $raw_allelic_counts_dir $chrom_info_file
+    sbatch --output="/project2/gilad/bstrober/temp_output/"$standard_id".out" --error="/project2/gilad/bstrober/temp_output/"$standard_id".err" wasp_mapping_pipeline_part2.sh $standard_id $genotype_dir $fastq_input_dir $wasp_intermediate_dir $genome_dir $vcf_file $raw_allelic_counts_dir $chrom_info_file
+    echo $standard_id
 done<$sample_names
 fi
+
+
 
 
 ### PART 3
@@ -200,11 +211,9 @@ fi
 ######### 3. For various heterozygous probability thresholds, place NA for (sample,site) pairs that have het. prob less than specified threshold
 ######### 4. Apply various filters for sites based on number of samples that we have mapped read counts to a het. site (etc)
 ######### 5. Visualize the number of counts we get at these various filters
-if false; then
+if false; then 
 sbatch process_and_organize_allelic_counts.sh $raw_allelic_counts_dir $processed_allelic_counts_dir $genotype_dir $preprocess_total_expression_dir $gencode_gene_annotation_file $visualize_allelic_counts_dir
 fi
-
-
 
 
 

@@ -214,13 +214,24 @@ quantile_normalize_and_standardize <- function(rpkm_data, preprocess_total_expre
     temp_mat <- t(apply(quantile_normalized_samples, 1, rank, ties.method = "average"))
     quantile_normalized <- qnorm(temp_mat / (ncol(temp_mat)+1));
 
+    # Quantile Normalized without standardization or projection onto gaussian
+    colnames(quantile_normalized_samples) <- colnames(rpkm_data)
+    rownames(quantile_normalized_samples) <- rownames(rpkm_data)
 
+    #  Write results to output file
+    output_file <- paste0(preprocess_total_expression_dir,"quantile_normalized_no_projection.txt")
+    save_DGE_matrix(quantile_normalized_samples, output_file) 
+
+
+    # Quantile normalization with gaussian projection
     colnames(quantile_normalized) <- colnames(rpkm_data)
     rownames(quantile_normalized) <- rownames(rpkm_data)
 
     #  Write results to output file
     output_file <- paste0(preprocess_total_expression_dir,"quantile_normalized.txt")
     save_DGE_matrix(quantile_normalized, output_file)
+
+
 
     return(quantile_normalized)
 }
@@ -264,23 +275,27 @@ preprocess_total_expression_dir = args[1]
 exon_file = args[2]
 bam_dir = args[3]
 
+
+
 # Load in table regarding exon information
 exon_table <- read.table(exon_file,header=TRUE)
 
 
+
+
 ##############################################################################################################
 #  Convert from BAMs to count based data (Using edgeR)
-#fc <- featureCounts(Sys.glob(paste0(bam_dir,"*bam")),annot.ext=exon_file)
-#counts <- DGEList(counts=fc$counts, genes=fc$annotation[,c("GeneID","Length","Chr","Start","End","Strand")])
+fc <- featureCounts(Sys.glob(paste0(bam_dir,"*bam")),annot.ext=exon_file)
+counts <- DGEList(counts=fc$counts, genes=fc$annotation[,c("GeneID","Length","Chr","Start","End","Strand")])
 
 #  Add biotype information to count data structure (ie. whether gene is protein_coding or not_protein_coding)
-#counts <- add_biotype_to_count_data_structure(counts, exon_table)
-#saveRDS(counts, paste0(preprocess_total_expression_dir,"raw_counts.rds"))
-#saveRDS(fc, paste0(preprocess_total_expression_dir,"fc.rds"))
+counts <- add_biotype_to_count_data_structure(counts, exon_table)
+saveRDS(counts, paste0(preprocess_total_expression_dir,"raw_counts.rds"))
+saveRDS(fc, paste0(preprocess_total_expression_dir,"fc.rds"))
 ################################################################################################################
 # Use this part if already converted from bams once!
-fc <- readRDS(paste0(preprocess_total_expression_dir,"fc.rds"))
-counts <- readRDS(paste0(preprocess_total_expression_dir,"raw_counts.rds"))
+# fc <- readRDS(paste0(preprocess_total_expression_dir,"fc.rds"))
+# counts <- readRDS(paste0(preprocess_total_expression_dir,"raw_counts.rds"))
 ################################################################################################################
 
 
