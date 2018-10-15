@@ -4,14 +4,12 @@ fastq_input_dir="$1"
 fastqc_dir="$2"
 genome_dir="$3"
 
-if false; then
 # Script provided by John Blischak (https://github.com/jdblischak/midway-subread-pipeline)
 Rscript download-genome.R $genome_dir
 date
 
 # Script provided by John Blischak (https://github.com/jdblischak/midway-subread-pipeline)
 Rscript download-exons.R $genome_dir
-fi
 
 date
 

@@ -67,7 +67,7 @@ tabix_directory="/project2/gilad/bstrober/tools/tabix-0.2.6/"
 ### 1. '8state'
 ### 2. '12state'
 # These contain assignments into either two or three groups, respectively.
-mixutre_hmm_cell_line_grouping_dir="/project2/gilad/bstrober/ipsc_differentiation_19_lines/preprocess_input_data/mixture_hmm_cell_line_groupings/"
+mixture_hmm_cell_line_grouping_dir="/project2/gilad/bstrober/ipsc_differentiation_19_lines/preprocess_input_data/mixture_hmm_cell_line_groupings/"
 
 # Directory containing gsea data
 gsea_data_dir="/project2/gilad/bstrober/tools/tools/gsea/data/"
@@ -168,7 +168,7 @@ fi
 
 
 # PART 4
-# Run sbatch preprocess_total_expression.sh $preprocess_total_expression_dir $lane_design_file $exon_file $bam_dir $visualize_total_expression_dir $fastqc_dir
+# Run sbatch preprocess_total_expression.sh $preprocess_total_expression_dir $lane_design_file $exon_file $bam_dir $visualize_total_expression_dir $fastqc_dir $mixutre_hmm_cell_line_grouping_dir
 # This script:
 #    1. Processes the aligned read counts and creates quantile normalized expression data (preprocess_total_expression.R). 
 #       # 1. also includes filters for genes. Genes need to have at least 10 samples such that RPKM >= .1 and raw counts >= 6
@@ -176,9 +176,8 @@ fi
 #    3. Also does some exploratory visualization analysis of the expression data  (visualize_processed_total_expression.R)
 #  Takes about 4 hours to run
 exon_file=$genome_dir"exons.saf"
-if false; then
-sh preprocess_total_expression.sh $preprocess_total_expression_dir $exon_file $bam_dir $visualize_total_expression_dir $metadata_input_file $covariate_dir $fastqc_dir $mixutre_hmm_cell_line_grouping_dir $gencode_gene_annotation_file $gsea_data_dir
-fi
+sh preprocess_total_expression.sh $preprocess_total_expression_dir $exon_file $bam_dir $visualize_total_expression_dir $metadata_input_file $covariate_dir $fastqc_dir $mixture_hmm_cell_line_grouping_dir
+
 
 
 
@@ -244,17 +243,56 @@ fi
 
 
 
-# File containing expression files
-expression_file_cross_data_sets="/project2/gilad/bstrober/ipsc_differentiation_19_lines/preprocess_input_data/expression_data_sets/expression_samples.txt"
-
-target_region_file="/project2/gilad/bstrober/ipsc_differentiation_19_lines/time_step_independent_qtl_pipelines/wasp/target_regions/target_regions_cis_distance_50000_maf_cutoff_0.1_min_reads_100_min_as_reads_25_min_het_counts_5_merged.txt"
 
 
-##### Part 4
-# Make heatmap showing correlation between ipsc temporal samples as well as those from other data sets
-if false; then
-sh expression_correlation_heatmap.sh $expression_file_cross_data_sets $target_region_file $visualize_total_expression_dir 
-fi
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -266,7 +304,7 @@ fi
 
 
 #############################################
-## USED TO DEBUG SAMPLE SWAPPING
+##OLD, retired scripts
 #############################################
 
 # debug_sample_swap_driver.sh checks to make sure that every RNA-seq sample (has the correct label) and is paired correctly with its corresponding genotype
@@ -276,4 +314,19 @@ fi
 ##### Takes about 8 hours to run.
 if false; then
 sbatch debug_sample_swap_driver.sh $processed_allelic_counts_dir $sample_swap_check_dir $genotype_dir $sample_names
+
+# File containing expression files
+expression_file_cross_data_sets="/project2/gilad/bstrober/ipsc_differentiation_19_lines/preprocess_input_data/expression_data_sets/expression_samples.txt"
+
+target_region_file="/project2/gilad/bstrober/ipsc_differentiation_19_lines/time_step_independent_qtl_pipelines/wasp/target_regions/target_regions_cis_distance_50000_maf_cutoff_0.1_min_reads_100_min_as_reads_25_min_het_counts_5_merged.txt"
+
+
+##### Part 4
+# Make heatmap showing correlation between ipsc temporal samples as well as those from other data sets
+sh expression_correlation_heatmap.sh $expression_file_cross_data_sets $target_region_file $visualize_total_expression_dir 
+
+
+
+
+
 fi

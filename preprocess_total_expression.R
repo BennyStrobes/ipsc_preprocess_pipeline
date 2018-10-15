@@ -287,17 +287,17 @@ exon_table <- read.table(exon_file,header=TRUE)
 
 ##############################################################################################################
 #  Convert from BAMs to count based data (Using edgeR)
-#fc <- featureCounts(Sys.glob(paste0(bam_dir,"*bam")),annot.ext=exon_file)
-#counts <- DGEList(counts=fc$counts, genes=fc$annotation[,c("GeneID","Length","Chr","Start","End","Strand")])
+fc <- featureCounts(Sys.glob(paste0(bam_dir,"*bam")),annot.ext=exon_file)
+counts <- DGEList(counts=fc$counts, genes=fc$annotation[,c("GeneID","Length","Chr","Start","End","Strand")])
 
 #  Add biotype information to count data structure (ie. whether gene is protein_coding or not_protein_coding)
-#counts <- add_biotype_to_count_data_structure(counts, exon_table)
-#saveRDS(counts, paste0(preprocess_total_expression_dir,"raw_counts.rds"))
-#saveRDS(fc, paste0(preprocess_total_expression_dir,"fc.rds"))
+counts <- add_biotype_to_count_data_structure(counts, exon_table)
+saveRDS(counts, paste0(preprocess_total_expression_dir,"raw_counts.rds"))
+saveRDS(fc, paste0(preprocess_total_expression_dir,"fc.rds"))
 ################################################################################################################
 # Use this part if already converted from bams once!
-fc <- readRDS(paste0(preprocess_total_expression_dir,"fc.rds"))
-counts <- readRDS(paste0(preprocess_total_expression_dir,"raw_counts.rds"))
+#fc <- readRDS(paste0(preprocess_total_expression_dir,"fc.rds"))
+#counts <- readRDS(paste0(preprocess_total_expression_dir,"raw_counts.rds"))
 ################################################################################################################
 
 

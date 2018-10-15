@@ -2011,12 +2011,6 @@ output_file <- paste0(visualize_total_expression_dir, "pc_covariate_pve_heatmap.
 #covariate_pc_pve_heatmap(pc_file, covariate_file,output_file, "PCA")
 
 
-pc_file <- paste0(covariate_dir,"cell_line_ignore_missing_principal_components_5_time_time_per_sample.txt")
-covariate_file <- paste0(covariate_dir, "processed_covariates_categorical.txt")
-output_file <- paste0(visualize_total_expression_dir, "cell_line_pcXtime_covariate_pve_heatmap.png")
-#covariate_pc_pve_heatmap(pc_file, covariate_file,output_file, "cell-line PCA")
-
-
 
 
 ####################################################################
@@ -2112,6 +2106,16 @@ output_file <- paste0(visualize_total_expression_dir, "flow_pc",pc_num,"_troponi
 #####################################
 # Retired scripts
 #####################################
+
+
+
+pc_file <- paste0(covariate_dir,"cell_line_ignore_missing_principal_components_5_time_time_per_sample.txt")
+covariate_file <- paste0(covariate_dir, "processed_covariates_categorical.txt")
+output_file <- paste0(visualize_total_expression_dir, "cell_line_pcXtime_covariate_pve_heatmap.png")
+#covariate_pc_pve_heatmap(pc_file, covariate_file,output_file, "cell-line PCA")
+
+
+
 
 # File containing assignment of each cell line to states in the 12 state model
 state_file_12 <- paste0(mixutre_hmm_cell_line_grouping_dir, "12state")

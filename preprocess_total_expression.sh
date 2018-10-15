@@ -9,8 +9,7 @@ metadata_input_file="$5"
 covariate_dir="$6"
 fastqc_dir="$7"
 mixutre_hmm_cell_line_grouping_dir="$8"
-gencode_gene_annotation_file="$9"
-gsea_data_dir="${10}"
+
 
 Rscript preprocess_total_expression.R $preprocess_total_expression_dir $exon_file $bam_dir
 date
@@ -21,13 +20,6 @@ date
 
 
 Rscript prepare_covariate_files.R $preprocess_total_expression_dir $metadata_input_file $covariate_dir $fastqc_dir
-date
-
-
-python pca_gene_set_enrichment.py $covariate_dir $gencode_gene_annotation_file $gsea_data_dir
-
-
-python prepare_covariate_files_helper.py $covariate_dir
 date
 
 
