@@ -1,5 +1,5 @@
 #!/bin/bash
-#SBATCH --mem=30G --time=08:30:00 --partition=broadwl
+#SBATCH --mem=30G --time=15:30:00 --partition=broadwl
 standard_id="$1"
 genotype_dir="$2"
 fastq_dir="$3"
@@ -11,6 +11,8 @@ chrom_info_file="$8"
 
 
 date
+module load samtools/1.4.1
+
 
 #########################################################
 # A. Map the fastq files using your favorite mapper/options and filter for quality using a cutoff of your choice (SUBREAD)
@@ -35,7 +37,6 @@ samtools index $wasp_intermediate_dir$standard_id.sort.bam
 #########################################################
 # This part takes around 10 minutes
 echo "WASP STEP 3: find_intersecting_snps.py"
-
 
 python find_intersecting_snps.py \
     --is_sorted \
@@ -68,7 +69,6 @@ samtools index $wasp_intermediate_dir$standard_id.sort.remap.sort.bam
 #########################################################
 #  This part takes around 3 minutes
 echo "WASP STEP 5: filter_remapped_reads.py"
-
 python filter_remapped_reads.py \
         $wasp_intermediate_dir$standard_id.sort.to.remap.bam \
         $wasp_intermediate_dir$standard_id.sort.remap.sort.bam \

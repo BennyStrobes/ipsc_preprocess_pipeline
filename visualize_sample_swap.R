@@ -42,6 +42,8 @@ for (n in 1:N) {
 
 cell_lines <- substring(colnames(total_counts)[1:length(colnames(total_counts))], 2)
 hit <- percent_biallelic > .8
+false_hit <- percent_biallelic > .4 & percent_biallelic < .6
+print(cell_lines[false_hit])
 # Put data into data.frame for plotting
 df <- data.frame(sample_num = 1:length(cell_lines), percent_biallelic = percent_biallelic)
 

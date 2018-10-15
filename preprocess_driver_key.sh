@@ -15,40 +15,44 @@ fastq_round_2_input_dir="/project2/gilad/reem/heartproject/heart2/fastq/"
 fastq_round_3_input_dir="/project2/gilad/reem/heartproject/heart_4newlines/fastq/"
 #  Directory containing fastq files from resequencing of 4 additional samples (round 4)
 fastq_round_4_input_dir="/project2/gilad/reem/heartproject/heart_4newlines_reseq/fastq/"
+# Directory containing fastq files from from 5 additional samples (round 5)
+fastq_round_5_input_dir="/project2/gilad/reem/heartproject/heart_finalbatch/fastq/"
+# Directory containing fastq files from those same 5 additional samples (round 6)
+fastq_round_6_input_dir="/project2/gilad/reem/heartproject/heart_finalbatch_reseq/fastq/"
 
 # File used to map sequencing core names to (cell line, time step) names for the first round of sequencing. Produced by Katie and Reem
-lane_design_round_1_file="/project2/gilad/bstrober/ipsc_differentiation/preprocess_input_data/LaneDesign2forR.csv"  
+lane_design_round_1_file="/project2/gilad/bstrober/ipsc_differentiation_19_lines/preprocess_input_data/LaneDesign2forR.csv"  
 # File used to map sequencing core names to (cell line, time step) names for the second round of sequencing. Produced by Katie and Reem
-lane_design_round_2_file="/project2/gilad/bstrober/ipsc_differentiation/preprocess_input_data/LaneDesignResequencing2forR.csv"
+lane_design_round_2_file="/project2/gilad/bstrober/ipsc_differentiation_19_lines/preprocess_input_data/LaneDesignResequencing2forR.csv"
 # File used to map sequencing core names to (cell line, time step) names for the third round of sequencing. Produced by Katie and Reem
 # This is also used as reference for fastq_round_4
-lane_design_round_3_file="/project2/gilad/bstrober/ipsc_differentiation/preprocess_input_data/LaneDesign_NewSamples.csv"
+lane_design_round_3_file="/project2/gilad/bstrober/ipsc_differentiation_19_lines/preprocess_input_data/LaneDesign_NewSamples.csv"
 
 #  Genotype file created by Bryce Van de Geijn. It's format is vcf-ish.
 #  Downloaded from "http://eqtl.uchicago.edu/jointLCL/" under the link "genotypes of 120 YRI individuals" on September 13, 2017
-genotype_input="/project2/gilad/bstrober/ipsc_differentiation/preprocess_input_data/genotypesYRI.gen.txt.gz"
+genotype_input="/project2/gilad/bstrober/ipsc_differentiation_19_lines/preprocess_input_data/genotypesYRI.gen.txt.gz"
 
 #  Heterozygous probabilities (from impute 2) genotype information contained in the following directory
 #  Directory contains:
 #       1. A file containing an ordered list of samples in the genotype files (YRI_samples.txt) 
 #       2. One file for each chromosome of the file format "chr1.hg19.impute2.gz" that contains heterozygous probabilities for all snps in that chromosome
 #  Bryce Van de Geijn sent me these files
-heterozygous_site_input_dir="/project2/gilad/bstrober/ipsc_differentiation/preprocess_input_data/heterozygous_probability_genotypes/"
+heterozygous_site_input_dir="/project2/gilad/bstrober/ipsc_differentiation_19_lines/preprocess_input_data/heterozygous_probability_genotypes/"
 
 #  Metadata/covariates compiled by Katie/Reem
-metadata_input_file="/project2/gilad/bstrober/ipsc_differentiation/preprocess_input_data/pilotmetadata.csv"
+metadata_input_file="/project2/gilad/bstrober/ipsc_differentiation_19_lines/preprocess_input_data/metadataUPDATED_04_11_2018.csv"
 
 #  Gencode hg19 gene annotation file
 #  Downloaded from "https://www.gencodegenes.org/releases/19.html" on September 13, 2017
-gencode_gene_annotation_file="/project2/gilad/bstrober/ipsc_differentiation/preprocess_input_data/gencode.v19.annotation.gtf.gz"
+gencode_gene_annotation_file="/project2/gilad/bstrober/ipsc_differentiation_19_lines/preprocess_input_data/gencode.v19.annotation.gtf.gz"
 
 #  Directory containing files created by Nick/Bryce 
 #  Data initially found on PPS at /data/internal/genotypes/hg19/YRI/
-impute2_genotype_dir="/project2/gilad/bstrober/ipsc_differentiation/preprocess_input_data/impute2_genotypes/"
+impute2_genotype_dir="/project2/gilad/bstrober/ipsc_differentiation_19_lines/preprocess_input_data/impute2_genotypes/"
 
 # Downloaded from http://hgdownload.soe.ucsc.edu/goldenPath/hg19/database/chromInfo.txt.gz on 10/20/17
 # Required by WASP
-chrom_info_file="/project2/gilad/bstrober/ipsc_differentiation/preprocess_input_data/chromInfo.txt"
+chrom_info_file="/project2/gilad/bstrober/ipsc_differentiation_19_lines/preprocess_input_data/chromInfo.txt"
 
 # Directory containing some pre-compiled WASP functions
 # Specifically, there are two important functions in this directory:
@@ -57,9 +61,16 @@ chrom_info_file="/project2/gilad/bstrober/ipsc_differentiation/preprocess_input_
 snp2h5_dir="/home/bstrober/ipsc_differentiation/preprocess/WASP/snp2h5/"
 
 # Directory where tabix is installed
-tabix_directory="/home/bstrober/software/tabix-0.2.6/"
+tabix_directory="/project2/gilad/bstrober/tools/tabix-0.2.6/"
 
+# Directory containing two files:
+### 1. '8state'
+### 2. '12state'
+# These contain assignments into either two or three groups, respectively.
+mixutre_hmm_cell_line_grouping_dir="/project2/gilad/bstrober/ipsc_differentiation_19_lines/preprocess_input_data/mixture_hmm_cell_line_groupings/"
 
+# Directory containing gsea data
+gsea_data_dir="/project2/gilad/bstrober/tools/tools/gsea/data/"
 
 ################################################################################################################################################################
 ################################################################################################################################################################
@@ -68,44 +79,54 @@ tabix_directory="/home/bstrober/software/tabix-0.2.6/"
 ################################################################################################################################################################
 
 #  Directory containing merged (across sequencing rounds) fastq files for each sample
-fastq_input_dir="/project2/gilad/bstrober/ipsc_differentiation/preprocess/fastq/"
+fastq_input_dir="/project2/gilad/bstrober/ipsc_differentiation_19_lines/preprocess/fastq/"
 
 #  Directory containing fastqc results. One output file for every fastq input file
-fastqc_dir="/project2/gilad/bstrober/ipsc_differentiation/preprocess/fastqc_data/"
+fastqc_dir="/project2/gilad/bstrober/ipsc_differentiation_19_lines/preprocess/fastqc_data/"
 
 #  Directory containing reference genome (GRCh37)
-genome_dir="/project2/gilad/bstrober/ipsc_differentiation/preprocess/genome/"
+genome_dir="/project2/gilad/bstrober/ipsc_differentiation_19_lines/preprocess/genome/"
 
 #  Directory containing bams. One bam file for each sample.
-bam_dir="/project2/gilad/bstrober/ipsc_differentiation/preprocess/bam/"
+bam_dir="/project2/gilad/bstrober/ipsc_differentiation_19_lines/preprocess/bam/"
 
 
 #  Directory containing processed counts, quantile normalized expression data
-preprocess_total_expression_dir="/project2/gilad/bstrober/ipsc_differentiation/preprocess/processed_total_expression/"
+preprocess_total_expression_dir="/project2/gilad/bstrober/ipsc_differentiation_19_lines/preprocess/processed_total_expression/"
 
 #  Directory containing covariate information (covariates, PCs)
-covariate_dir="/project2/gilad/bstrober/ipsc_differentiation/preprocess/covariates/"
+covariate_dir="/project2/gilad/bstrober/ipsc_differentiation_19_lines/preprocess/covariates/"
 
 #  Directory containing plots/figures related to exploratory analysis of the total expression data (preprocess_total_expression_dir)
-visualize_total_expression_dir="/project2/gilad/bstrober/ipsc_differentiation/preprocess/visualize_total_expression/"
+visualize_total_expression_dir="/project2/gilad/bstrober/ipsc_differentiation_19_lines/preprocess/visualize_total_expression/"
 
 #  Directory containing various changes to $genotype_input so that it is ammendable to the software pipelines used to process allelic counts (ie WASP and GATK ASEReader)
-genotype_dir="/project2/gilad/bstrober/ipsc_differentiation/preprocess/genotype/"
+genotype_dir="/project2/gilad/bstrober/ipsc_differentiation_19_lines/preprocess/genotype/"
 
 #  Directory to contain various intermediate files developed by the WASP pipeline (many derivatives of the initial bams..)
-wasp_intermediate_dir="/project2/gilad/bstrober/ipsc_differentiation/preprocess/wasp_intermediate_files/"
+wasp_intermediate_dir="/project2/gilad/bstrober/ipsc_differentiation_19_lines/preprocess/wasp_intermediate_files/"
 
 #  Directory containing raw allelic counts
-raw_allelic_counts_dir="/project2/gilad/bstrober/ipsc_differentiation/preprocess/raw_allelic_counts/"
+raw_allelic_counts_dir="/project2/gilad/bstrober/ipsc_differentiation_19_lines/preprocess/raw_allelic_counts/"
 
 #  Directory containing processed allelic counts
-processed_allelic_counts_dir="/project2/gilad/bstrober/ipsc_differentiation/preprocess/processed_allelic_counts/"
+processed_allelic_counts_dir="/project2/gilad/bstrober/ipsc_differentiation_19_lines/preprocess/processed_allelic_counts/"
 
 #  Directory containing plots/figures related to exploratory analysis of the total expression data (preprocess_total_expression_dir)
-visualize_allelic_counts_dir="/project2/gilad/bstrober/ipsc_differentiation/preprocess/visualize_allelic_counts/"
+visualize_allelic_counts_dir="/project2/gilad/bstrober/ipsc_differentiation_19_lines/preprocess/visualize_allelic_counts/"
 
 
-sample_swap_check_dir="/project2/gilad/bstrober/ipsc_differentiation/preprocess/debug_sample_swap/"
+sample_swap_check_dir="/project2/gilad/bstrober/ipsc_differentiation_19_lines/preprocess/debug_sample_swap/"
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -124,8 +145,9 @@ sample_swap_check_dir="/project2/gilad/bstrober/ipsc_differentiation/preprocess/
 # Note: This code really isn't the best b/c it very manually parses the fastq files based on the lane_design files. So caution should be taken in applying merge_fastq_replicates to new situations.
 # Takes about 20 minutes to run
 if false; then
-sh merge_fastq_replicates.sh $fastq_round_1_input_dir $fastq_round_2_input_dir $fastq_round_3_input_dir $fastq_round_4_input_dir $lane_design_round_1_file $lane_design_round_2_file $lane_design_round_3_file $fastq_input_dir
+sh merge_fastq_replicates.sh $fastq_round_1_input_dir $fastq_round_2_input_dir $fastq_round_3_input_dir $fastq_round_4_input_dir $fastq_round_5_input_dir $fastq_round_6_input_dir $lane_design_round_1_file $lane_design_round_2_file $lane_design_round_3_file $fastq_input_dir
 fi
+
 
 ##Part 2
 # Run "sbatch fastqc_and_download_reference_genome.sh $fastq_input_dir $fastqc_dir $genome_dir" to completion.
@@ -134,6 +156,7 @@ fi
 if false; then
 sbatch fastqc_and_download_reference_genome.sh $fastq_input_dir $fastqc_dir $genome_dir
 fi
+
 
 ##PART 3
 # Run "sh submit-subread.sh $fastq_input_dir $bam_dir $genome_dir". This shell submits (sbatch) a job for each sample (fastq file).
@@ -153,9 +176,8 @@ fi
 #    3. Also does some exploratory visualization analysis of the expression data  (visualize_processed_total_expression.R)
 #  Takes about 4 hours to run
 exon_file=$genome_dir"exons.saf"
-if false; then
-sh preprocess_total_expression.sh $preprocess_total_expression_dir $exon_file $bam_dir $visualize_total_expression_dir $metadata_input_file $covariate_dir $fastqc_dir
-fi
+sh preprocess_total_expression.sh $preprocess_total_expression_dir $exon_file $bam_dir $visualize_total_expression_dir $metadata_input_file $covariate_dir $fastqc_dir $mixutre_hmm_cell_line_grouping_dir $gencode_gene_annotation_file $gsea_data_dir
+
 
 #############################################################################################################################
 # Preprocess allelic counts
@@ -195,8 +217,8 @@ vcf_file=$genotype_dir"YRI_genotype.vcf.gz"
 if false; then
 while read standard_id_fastq sequencer_id; do
     standard_id=${standard_id_fastq::${#standard_id_fastq}-9}
-    sbatch --output="/project2/gilad/bstrober/temp_output/"$standard_id".out" --error="/project2/gilad/bstrober/temp_output/"$standard_id".err" wasp_mapping_pipeline_part2.sh $standard_id $genotype_dir $fastq_input_dir $wasp_intermediate_dir $genome_dir $vcf_file $raw_allelic_counts_dir $chrom_info_file
     echo $standard_id
+    sbatch wasp_mapping_pipeline_part2.sh $standard_id $genotype_dir $fastq_input_dir $wasp_intermediate_dir $genome_dir $vcf_file $raw_allelic_counts_dir $chrom_info_file
 done<$sample_names
 fi
 
@@ -211,10 +233,25 @@ fi
 ######### 3. For various heterozygous probability thresholds, place NA for (sample,site) pairs that have het. prob less than specified threshold
 ######### 4. Apply various filters for sites based on number of samples that we have mapped read counts to a het. site (etc)
 ######### 5. Visualize the number of counts we get at these various filters
-if false; then 
+if false; then
 sbatch process_and_organize_allelic_counts.sh $raw_allelic_counts_dir $processed_allelic_counts_dir $genotype_dir $preprocess_total_expression_dir $gencode_gene_annotation_file $visualize_allelic_counts_dir
 fi
 
+
+
+
+
+# File containing expression files
+expression_file_cross_data_sets="/project2/gilad/bstrober/ipsc_differentiation_19_lines/preprocess_input_data/expression_data_sets/expression_samples.txt"
+
+target_region_file="/project2/gilad/bstrober/ipsc_differentiation_19_lines/time_step_independent_qtl_pipelines/wasp/target_regions/target_regions_cis_distance_50000_maf_cutoff_0.1_min_reads_100_min_as_reads_25_min_het_counts_5_merged.txt"
+
+
+##### Part 4
+# Make heatmap showing correlation between ipsc temporal samples as well as those from other data sets
+if false; then
+sh expression_correlation_heatmap.sh $expression_file_cross_data_sets $target_region_file $visualize_total_expression_dir 
+fi
 
 
 
@@ -237,4 +274,3 @@ fi
 if false; then
 sbatch debug_sample_swap_driver.sh $processed_allelic_counts_dir $sample_swap_check_dir $genotype_dir $sample_names
 fi
-

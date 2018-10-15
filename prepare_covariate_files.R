@@ -347,6 +347,7 @@ process_and_save_covariates_categorical <- function(sample_info, raw_covariates,
     multiqc$Sample <- substr(multiqc$Sample,1,nchar(multiqc$Sample)-7)
 
 
+
     # Add columns (this part is fairly manual)
     covariate_info <- add_covariate_column_categorical(covariate_info, raw_covariates, 3, "feeder_passage","real_valued")
     covariate_info <- add_covariate_column_categorical(covariate_info, raw_covariates, 4, "feeder_free_passage","real_valued")
@@ -392,6 +393,17 @@ process_and_save_covariates_categorical <- function(sample_info, raw_covariates,
     save_python_style_matrix(covariate_info, cov_output_file, "Order_sample_num")
 }
 
+save_gene_loadings <- function(rownames, quant_expr, n, output_file) {
+    svd1 <- svd(as.matrix(quant_expr))
+    #  Scores of first n pc's across all samples
+    loadings <- svd1$u[,1:n]
+    colnames(loadings) <- paste0("PC",1:n)
+    rownames(loadings) <- rownames
+    save_python_style_matrix(loadings, output_file, "Gene_id")
+
+}
+
+
 
 
 
@@ -399,6 +411,7 @@ preprocess_total_expression_dir = args[1]  # Where total expression processed da
 metadata_input_file = args[2]  # Input file created by Katie/Reem that has all organized covariate information
 covariate_dir = args[3]  # Output did to save covariate information
 fastqc_dir = args[4]  # Input directory that contains fastqc/multiqc output files
+
 
 #  Get sample information 
 sample_info_file <- paste0(preprocess_total_expression_dir, "sample_info.txt")
@@ -413,21 +426,36 @@ quantile_normalized_time_step_independent_exp_file <- paste0(preprocess_total_ex
 quant_expr_time_step_independent <- read.csv(quantile_normalized_time_step_independent_exp_file, header=TRUE, sep=" ")
 
 
+# Get standardized cell line specific expression
+cell_line_expression_ignore_missing_file <- paste0(preprocess_total_expression_dir,"cell_line_expression_ignore_missing.txt")
+cell_line_expression_ignore_missing <- read.csv(cell_line_expression_ignore_missing_file, header=TRUE, sep="\t")
+cell_line_expression_ignore_missing_rownames <- cell_line_expression_ignore_missing[,1]
+cell_line_expression_ignore_missing <- cell_line_expression_ignore_missing[,2:(dim(cell_line_expression_ignore_missing)[2])]
+colnames(cell_line_expression_ignore_missing) <- substr(colnames(cell_line_expression_ignore_missing), 2, 1000)
+
 #  Get rpkm expression_data
 rpkm_exp_file <- paste0(preprocess_total_expression_dir, "rpkm.txt")
 rpkm_expr <- read.csv(rpkm_exp_file, header=TRUE, sep=" ")
 
 # Get multiqc general stats output file
 multiqc_file <- paste0(fastqc_dir, "multiqc_data/multiqc_general_stats.txt")
-# multiqc <- read.table(multiqc_file,header=TRUE)
+multiqc <- read.table(multiqc_file,header=TRUE)
 
 #  Get raw covariates
-# raw_covariates <- read.csv(metadata_input_file)
+raw_covariates <- read.csv(metadata_input_file)
 
 
 ##############################################################################################################################
 # Write PCs to output file
 ##############################################################################################################################
+#  Number of pcs to save
+n <- 9
+
+#  Ouptut file to save PC loadings to 
+pc_output_file <- paste0(covariate_dir, "cell_line_ignore_missing_principal_components_", n, ".txt")
+save_pcs(colnames(cell_line_expression_ignore_missing), cell_line_expression_ignore_missing, n, pc_output_file)
+
+
 #  Number of pcs to save
 n <- 10
 #  Ouptut file to save PC loadings to 
@@ -438,6 +466,44 @@ save_pcs(sample_info$Sample_name, quant_expr, n, pc_output_file)
 pca_output_stem <- paste0(covariate_dir, "pca_loadings_time_step_independent_")
 save_time_step_independent_pca(sample_info, quant_expr_time_step_independent, pca_output_stem)
 
+####################################################################
+# Write loadings to output file
+####################################################################
+n <- 9
+loading_output_file <- paste0(covariate_dir, "cell_line_ignore_missing_gene_loadings_", n, ".txt")
+save_gene_loadings(cell_line_expression_ignore_missing_rownames, cell_line_expression_ignore_missing, n, loading_output_file)
+
+
+
+##############################################################################################################################
+# Write raw covariates  to output file
+##############################################################################################################################
+
+cov_output_file <- paste0(covariate_dir, "processed_covariates_categorical.txt")
+process_and_save_covariates_categorical(sample_info, raw_covariates, multiqc, cov_output_file, quant_expr)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+#####################################
+## OLD SCRIPTS. NOT CURRENTLY USED
+#####################################
+# cov_output_file <- paste0(covariate_dir, "processed_covariates_binary_categorical.txt")
+# process_and_save_covariates_binary_categorical(sample_info, raw_covariates, cov_output_file)
+
+
 
 ##############################################################################################################################
 # Write surrogate variables via SVA to output file
@@ -445,20 +511,8 @@ save_time_step_independent_pca(sample_info, quant_expr_time_step_independent, pc
 
 
 #  Ouptut file to save SVA loadings to (for expression data aggregrated across time steps)
-sva_output_file <- paste0(covariate_dir, "sva_loadings.txt")
-corrected_expression_sva <- paste0(preprocess_total_expression_dir, "quant_expr_sva_corrected.txt")
-save_sva(sample_info, quant_expr, sva_output_file, corrected_expression_sva)
+#sva_output_file <- paste0(covariate_dir, "sva_loadings.txt")
+#corrected_expression_sva <- paste0(preprocess_total_expression_dir, "quant_expr_sva_corrected.txt")
+#save_sva(sample_info, quant_expr, sva_output_file, corrected_expression_sva)
 
-
-
-
-##############################################################################################################################
-# Write raw covariates  to output file
-##############################################################################################################################
-# cov_output_file <- paste0(covariate_dir, "processed_covariates_binary_categorical.txt")
-# process_and_save_covariates_binary_categorical(sample_info, raw_covariates, cov_output_file)
-
-
-cov_output_file <- paste0(covariate_dir, "processed_covariates_categorical.txt")
-# process_and_save_covariates_categorical(sample_info, raw_covariates, multiqc, cov_output_file, quant_expr)
 

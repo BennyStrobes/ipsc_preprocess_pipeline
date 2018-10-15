@@ -1,5 +1,5 @@
 #!/bin/bash
-#SBATCH --time=01:30:00 --mem=20G
+#SBATCH --time=01:30:00 --mem=20G --partition=broadwl
 
 input_file="$1"
 output_dir="$2"
