@@ -72,6 +72,9 @@ mixutre_hmm_cell_line_grouping_dir="/project2/gilad/bstrober/ipsc_differentiatio
 # Directory containing gsea data
 gsea_data_dir="/project2/gilad/bstrober/tools/tools/gsea/data/"
 
+
+
+
 ################################################################################################################################################################
 ################################################################################################################################################################
 #OUTPUT DIRECTORIES (The following scripts assume these directories all exist)
@@ -114,9 +117,6 @@ processed_allelic_counts_dir="/project2/gilad/bstrober/ipsc_differentiation_19_l
 
 #  Directory containing plots/figures related to exploratory analysis of the total expression data (preprocess_total_expression_dir)
 visualize_allelic_counts_dir="/project2/gilad/bstrober/ipsc_differentiation_19_lines/preprocess/visualize_allelic_counts/"
-
-
-sample_swap_check_dir="/project2/gilad/bstrober/ipsc_differentiation_19_lines/preprocess/debug_sample_swap/"
 
 
 
@@ -176,7 +176,10 @@ fi
 #    3. Also does some exploratory visualization analysis of the expression data  (visualize_processed_total_expression.R)
 #  Takes about 4 hours to run
 exon_file=$genome_dir"exons.saf"
+if false; then
 sh preprocess_total_expression.sh $preprocess_total_expression_dir $exon_file $bam_dir $visualize_total_expression_dir $metadata_input_file $covariate_dir $fastqc_dir $mixutre_hmm_cell_line_grouping_dir $gencode_gene_annotation_file $gsea_data_dir
+fi
+
 
 
 #############################################################################################################################
