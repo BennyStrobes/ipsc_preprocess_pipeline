@@ -64,9 +64,10 @@ snp2h5_dir="/home/bstrober/ipsc_differentiation/preprocess/WASP/snp2h5/"
 tabix_directory="/project2/gilad/bstrober/tools/tabix-0.2.6/"
 
 # Directory containing two files:
-### 1. '8state'
-### 2. '12state'
-# These contain assignments into either two or three groups, respectively.
+### 1. 'mixsvgp_K2_L100_1_28542829_assignments'
+### 2. 'mixsvgp_K2_L20_0_29526888_gene_assignments'
+### 3. 'mixsvgp_K2_L20_0_29526888_fmean'
+### 4. 'flow_results.txt'
 mixture_hmm_cell_line_grouping_dir="/project2/gilad/bstrober/ipsc_differentiation_19_lines/preprocess_input_data/mixture_hmm_cell_line_groupings/"
 
 # Directory containing gsea data

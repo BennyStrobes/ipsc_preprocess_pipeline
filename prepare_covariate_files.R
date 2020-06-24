@@ -356,8 +356,6 @@ process_and_save_covariates_categorical <- function(sample_info, raw_covariates,
     covariate_info <- add_covariate_column_categorical(covariate_info, raw_covariates, 7, "RNA_extraction_day","categorical")
     covariate_info <- add_covariate_column_categorical(covariate_info, raw_covariates, 9, "RNA_extraction_person","categorical")
     covariate_info <- add_covariate_column_categorical(covariate_info, raw_covariates, 11, "RNA_extraction_round","categorical")
-    covariate_info <- add_covariate_column_categorical(covariate_info, raw_covariates, 12, "volume_needed","real_valued")
-    covariate_info <- add_covariate_column_categorical(covariate_info, raw_covariates, 13, "water_added","real_valued")
     covariate_info <- add_covariate_column_categorical(covariate_info, raw_covariates, 14, "differentiation_batch","categorical")
     covariate_info <- add_covariate_column_categorical(covariate_info, raw_covariates, 16, "library_batch","categorical")
     covariate_info <- add_covariate_column_categorical(covariate_info, raw_covariates, 22, "beating","real_valued")
@@ -370,7 +368,7 @@ process_and_save_covariates_categorical <- function(sample_info, raw_covariates,
     covariate_info <- add_covariate_column_categorical(covariate_info, raw_covariates, 32, "swirl_description","categorical")
 
     # Now add stats from multiqc
-    covariate_info <- add_multiqc_covariate(covariate_info, multiqc, 2, "fastq_percent_duplicates")
+    covariate_info <- add_multiqc_covariate(covariate_info, multiqc, 2, "percent_duplicates")
     covariate_info <- add_multiqc_covariate(covariate_info, multiqc, 3, "percent_gc")
     covariate_info <- add_multiqc_covariate(covariate_info, multiqc, 4, "average_sequence_length")
     covariate_info <- add_multiqc_covariate(covariate_info, multiqc, 5, "total_sequences")
@@ -378,7 +376,7 @@ process_and_save_covariates_categorical <- function(sample_info, raw_covariates,
 
     # Now add average expression of marker genes in late time points (cardiomyocytes)
     covariate_info <- add_average_cardiomyocyte_expression_of_gene(covariate_info, quant_expr, "ENSG00000118194", "avg_10_15_troponin_mRNA_expr")
-    covariate_info <- add_average_cardiomyocyte_expression_of_gene(covariate_info, quant_expr, "ENSG00000181449", "avg_10_15_sox2_mRNA_expr")
+    covariate_info <- add_average_cardiomyocyte_expression_of_gene(covariate_info, quant_expr, "ENSG00000111704", "avg_10_15_nanog_mRNA_expr")
 
 
     # Remove un-informative columns
@@ -448,30 +446,20 @@ raw_covariates <- read.csv(metadata_input_file)
 ##############################################################################################################################
 # Write PCs to output file
 ##############################################################################################################################
-#  Number of pcs to save
-n <- 9
 
+###############################
+# Run Cell line PCA!
+n <- 9  # Number of PCs to save
 #  Ouptut file to save PC loadings to 
 pc_output_file <- paste0(covariate_dir, "cell_line_ignore_missing_principal_components_", n, ".txt")
 save_pcs(colnames(cell_line_expression_ignore_missing), cell_line_expression_ignore_missing, n, pc_output_file)
 
-
-#  Number of pcs to save
-n <- 10
+###############################
+# Run PCA on all 297 RNA-seq samples
+n <- 10 #  Number of pcs to save
 #  Ouptut file to save PC loadings to 
 pc_output_file <- paste0(covariate_dir, "principal_components_", n, ".txt")
 save_pcs(sample_info$Sample_name, quant_expr, n, pc_output_file)
-
-#  Ouptut file to save PCA loadings to (for expression data when time steps are treated indpendently)
-pca_output_stem <- paste0(covariate_dir, "pca_loadings_time_step_independent_")
-save_time_step_independent_pca(sample_info, quant_expr_time_step_independent, pca_output_stem)
-
-####################################################################
-# Write loadings to output file
-####################################################################
-n <- 9
-loading_output_file <- paste0(covariate_dir, "cell_line_ignore_missing_gene_loadings_", n, ".txt")
-save_gene_loadings(cell_line_expression_ignore_missing_rownames, cell_line_expression_ignore_missing, n, loading_output_file)
 
 
 
@@ -493,6 +481,18 @@ process_and_save_covariates_categorical(sample_info, raw_covariates, multiqc, co
 
 
 
+
+####################################################################
+# Write loadings to output file
+####################################################################
+#n <- 9
+#loading_output_file <- paste0(covariate_dir, "cell_line_ignore_missing_gene_loadings_", n, ".txt")
+#save_gene_loadings(cell_line_expression_ignore_missing_rownames, cell_line_expression_ignore_missing, n, loading_output_file)
+
+
+#  Ouptut file to save PCA loadings to (for expression data when time steps are treated indpendently)
+# pca_output_stem <- paste0(covariate_dir, "pca_loadings_time_step_independent_")
+# save_time_step_independent_pca(sample_info, quant_expr_time_step_independent, pca_output_stem)
 
 
 
